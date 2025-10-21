@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable no-undef */
 import colors from 'colors';
 import mongoose from 'mongoose';
 import { Server } from 'socket.io';
@@ -14,7 +16,7 @@ process.on('uncaughtException', error => {
   process.exit(1);
 });
 
-let server: any;
+let server: import('http').Server | undefined;
 async function main() {
   try {
     mongoose.connect(config.database_url as string);
@@ -40,7 +42,7 @@ async function main() {
       },
     });
     socketHelper.socket(io);
-    //@ts-ignore
+    //@ts-expect-error
     global.io = io;
   } catch (error) {
     errorLogger.error(colors.red('🤢 Failed to connect Database'));

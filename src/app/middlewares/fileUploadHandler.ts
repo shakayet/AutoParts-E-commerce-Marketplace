@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import ApiError from '../../errors/ApiError';
+import process from 'process';
 
 const fileUploadHandler = () => {
   //create upload folder
@@ -53,8 +54,10 @@ const fileUploadHandler = () => {
     },
   });
 
+  type MulterFile = { fieldname: string; originalname: string; filename: string; mimetype: string };
+
   //file filter
-  const filterFilter = (req: Request, file: any, cb: FileFilterCallback) => {
+  const filterFilter = (req: Request, file: MulterFile, cb: FileFilterCallback) => {
     if (file.fieldname === 'image') {
       if (
         file.mimetype === 'image/jpeg' ||
@@ -96,7 +99,7 @@ const fileUploadHandler = () => {
     storage: storage,
     fileFilter: filterFilter,
   }).fields([
-    { name: 'image', maxCount: 3 },
+    { name: 'image', maxCount: 6 },
     { name: 'media', maxCount: 3 },
     { name: 'doc', maxCount: 3 },
   ]);

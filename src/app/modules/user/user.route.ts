@@ -30,4 +30,26 @@ router
     UserController.createUser
   );
 
+router
+  .route('/')
+  .get(auth(USER_ROLES.ADMIN), UserController.getAllUsers);
+
+router.route('/:id').get(auth(USER_ROLES.ADMIN), UserController.getUserById);
+
+router
+  .route('/change-password')
+  .patch(
+    auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+    validateRequest(UserValidation.changePasswordZodSchema),
+    UserController.changePassword
+  );
+
+router
+  .route('/:id/block')
+  .patch(
+    auth(USER_ROLES.ADMIN),
+    validateRequest(UserValidation.blockUnblockZodSchema),
+    UserController.blockUnblockUser
+  );
+
 export const UserRoutes = router;

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { AuthService } from './auth.service';
-import { JwtPayload } from 'jsonwebtoken';
+// import { JwtPayload } from 'jsonwebtoken';
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { ...verifyData } = req.body;
@@ -14,6 +14,18 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     message: result.message,
     data: result.data,
+  });
+});
+
+const registerUser = catchAsync(async (req: Request, res: Response) => {
+  const { ...userData } = req.body;
+  const result = await AuthService.registerUserFromDB(userData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.CREATED,
+    message: 'User registered successfully. Please check your email for OTP',
+    data: result,
   });
 });
 
@@ -44,8 +56,8 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
 
 const resendOtp = async (req: Request, res: Response) => {
   try {
-    const user = req.user as JwtPayload;
-    const result = await AuthService.resendOtpToDB(user.email);
+    const email = req.body.email;
+    const result = await AuthService.resendOtpToDB(email);
     res.status(200).json({ success: true, message: result.message });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An error occurred';
@@ -54,7 +66,9 @@ const resendOtp = async (req: Request, res: Response) => {
 };
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
-  const token = req.headers.authorization;
+  const authHeader = req.headers.authorization as string | undefined;
+  let token: string | undefined = authHeader;
+  if (authHeader && authHeader.startsWith('Bearer ')) token = authHeader.split(' ')[1];
   const { ...resetData } = req.body;
   const result = await AuthService.resetPasswordToDB(token!, resetData);
 
@@ -85,4 +99,5 @@ export const AuthController = {
   resetPassword,
   changePassword,
   resendOtp,
+  registerUser,
 };

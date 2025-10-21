@@ -17,7 +17,7 @@ const createUser = catchAsync(
       success: true,
       statusCode: StatusCodes.OK,
       message: 'User created successfully',
-      data: result,
+      data: result.user,
     });
   }
 );
@@ -38,7 +38,8 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 const updateProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    let image = getSingleFilePath(req.files, 'image');
+  const files = req.files as Record<string, { filename: string }[] | undefined> | undefined;
+  let image = getSingleFilePath(files, 'image');
 
     const data = {
       image,
@@ -55,4 +56,64 @@ const updateProfile = catchAsync(
   }
 );
 
-export const UserController = { createUser, getUserProfile, updateProfile };
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAllUsersFromDB();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Users retrieved successfully',
+    data: result,
+  });
+});
+
+const getUserById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await UserService.getUserByIdFromDB(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User retrieved successfully',
+    data: result,
+  });
+});
+
+const changePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { oldPassword, newPassword } = req.body;
+
+    await UserService.changePasswordToDB(user, oldPassword, newPassword);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Password changed successfully',
+    });
+  }
+);
+
+const blockUnblockUser = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { block } = req.body;
+
+  const result = await UserService.blockUnblockUserToDB(id, block);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: block ? 'User blocked' : 'User unblocked',
+    data: result,
+  });
+});
+
+export const UserController = {
+  createUser,
+  getUserProfile,
+  updateProfile,
+  getAllUsers,
+  getUserById,
+  changePassword,
+  blockUnblockUser,
+};

@@ -12,6 +12,10 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: true,
     },
+    phone: {
+      type: String,
+      required: false,
+    },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
@@ -32,6 +36,33 @@ const userSchema = new Schema<IUser, UserModal>(
     image: {
       type: String,
       default: 'https://i.ibb.co/z5YHLV9/profile.png',
+    },
+    whatsappNumber: {
+      type: String,
+      required: false,
+    },
+    address: {
+      type: String,
+      required: false,
+    },
+    coordinates: {
+      type: {
+        lat: { type: Number },
+        lng: { type: Number },
+      },
+      required: false,
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    ratingsCount: {
+      type: Number,
+      default: 0,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
     },
     status: {
       type: String,
@@ -84,17 +115,23 @@ userSchema.statics.isMatchPassword = async (
 
 //check user
 userSchema.pre('save', async function (next) {
-  //check user
-  const isExist = await User.findOne({ email: this.email });
-  if (isExist) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Email already exist!');
+  // only run on new documents or when email/password is modified
+  if (this.isNew || this.isModified('email') || this.isModified('password')) {
+    // check duplicate email (exclude self when updating)
+    const exists = await User.findOne({ email: this.email });
+    if (exists && (!this._id || exists._id.toString() !== this._id.toString())) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Email already exist!');
+    }
+
+    // hash password if modified
+    if (this.isModified('password') && this.password) {
+      this.password = await bcrypt.hash(
+        this.password,
+        Number(config.bcrypt_salt_rounds)
+      );
+    }
   }
 
-  //password hash
-  this.password = await bcrypt.hash(
-    this.password,
-    Number(config.bcrypt_salt_rounds)
-  );
   next();
 });
 

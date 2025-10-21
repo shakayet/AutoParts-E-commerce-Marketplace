@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload, Secret } from 'jsonwebtoken';
@@ -16,6 +17,8 @@ import cryptoToken from '../../../util/cryptoToken';
 import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
+import { UserService } from '../user/user.service';
+import { VerificationToken } from '../verificationToken/verificationToken.model';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -98,12 +101,33 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
     );
   }
 
-  if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
+  // Try verification token first (separate collection)
+  const verificationRecord = await VerificationToken.findOne({ user: isExistUser._id, otp: oneTimeCode });
+
+  const MAX_VERIFY_ATTEMPTS = 5;
+
+  if (!verificationRecord) {
+    // fallback to user.authentication
+    if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
+      // increment attempts on any existing verification token for the user
+      const anyToken = await VerificationToken.findOne({ user: isExistUser._id });
+      if (anyToken) {
+        anyToken.attempts = (anyToken.attempts || 0) + 1;
+        await anyToken.save();
+        if (anyToken.attempts >= MAX_VERIFY_ATTEMPTS) {
+          // remove tokens and clear authentication
+          await VerificationToken.deleteMany({ user: isExistUser._id });
+          await User.findByIdAndUpdate(isExistUser._id, { $set: { authentication: { oneTimeCode: null, expireAt: null } } });
+          throw new ApiError(StatusCodes.TOO_MANY_REQUESTS, 'Too many verification attempts. Please request a new OTP.');
+        }
+      }
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
+    }
   }
 
   const date = new Date();
-  if (date > isExistUser.authentication?.expireAt) {
+  const expireAt = verificationRecord ? verificationRecord.expireAt : isExistUser.authentication?.expireAt;
+  if (!expireAt || date > expireAt) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       'Otp already expired, Please try again'
@@ -118,6 +142,8 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
       { _id: isExistUser._id },
       { verified: true, authentication: { oneTimeCode: null, expireAt: null } }
     );
+    // remove verification token(s)
+    await VerificationToken.deleteMany({ user: isExistUser._id });
     message = 'Email verify successfully';
   } else {
     await User.findOneAndUpdate(
@@ -138,6 +164,8 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
       token: createToken,
       expireAt: new Date(Date.now() + 5 * 60000),
     });
+    // remove any verification tokens to avoid reuse/confusion
+    await VerificationToken.deleteMany({ user: isExistUser._id });
     message =
       'Verification Successful: Please securely store and utilize this code for reset password';
     data = createToken;
@@ -151,6 +179,10 @@ const resetPasswordToDB = async (
   payload: IAuthResetPassword
 ) => {
   const { newPassword, confirmPassword } = payload;
+  if (!token) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Reset token is required');
+  }
+
   //isExist token
   const isExistToken = await ResetToken.isExistToken(token);
   if (!isExistToken) {
@@ -200,6 +232,8 @@ const resetPasswordToDB = async (
   await User.findOneAndUpdate({ _id: isExistToken.user }, updateData, {
     new: true,
   });
+  // remove the used reset token so it cannot be reused
+  await ResetToken.deleteMany({ token });
 };
 
 const changePasswordToDB = async (
@@ -254,14 +288,19 @@ const resendOtpToDB = async (email: string) => {
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
-
-  // If user already verified, no need to resend
-  // if (isExistUser.verified) {
-  //   throw new ApiError(
-  //     StatusCodes.BAD_REQUEST,
-  //     'Your account is already verified'
-  //   );
-  // }
+  // rate limit: allow max 3 resends per 15 minutes
+  const MAX_RESENDS = 3;
+  const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+  const now = new Date();
+  const auth = isExistUser.authentication || { resendCount: 0, lastResendAt: null } as any;
+  if (auth.lastResendAt && now.getTime() - new Date(auth.lastResendAt).getTime() < WINDOW_MS) {
+    if ((auth.resendCount || 0) >= MAX_RESENDS) {
+      throw new ApiError(StatusCodes.TOO_MANY_REQUESTS, 'Too many OTP requests. Please try again later');
+    }
+  } else {
+    // reset window
+    auth.resendCount = 0;
+  }
 
   //generate new otp
   const otp = generateOTP();
@@ -275,17 +314,38 @@ const resendOtpToDB = async (email: string) => {
   emailHelper.sendEmail(resendTemplate);
 
   //save otp to DB
-  const authentication = {
-    oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60000), // 3 minutes expiry
-  };
+  auth.oneTimeCode = otp;
+  auth.expireAt = new Date(Date.now() + 3 * 60000);
+  auth.lastResendAt = now;
+  auth.resendCount = (auth.resendCount || 0) + 1;
 
-  await User.findOneAndUpdate(
-    { _id: isExistUser._id },
-    { $set: { authentication } }
-  );
+  await User.findOneAndUpdate({ _id: isExistUser._id }, { $set: { authentication: auth } });
+
+  // create verification token record
+  await VerificationToken.create({
+    user: isExistUser._id,
+    otp,
+    expireAt: new Date(Date.now() + 3 * 60000),
+    attempts: 0,
+  });
 
   return { message: 'OTP resent successfully, please check your email' };
+};
+
+// register user
+const registerUserFromDB = async (payload: any) => {
+  // delegate to UserService to keep logic consistent
+  const result = await UserService.createUserToDB(payload);
+
+  // create verification token record for OTP (mirror to spec)
+  const otp = result.otp;
+  await VerificationToken.create({
+    user: (result.user as any)._id,
+    otp,
+    expireAt: new Date(Date.now() + 3 * 60000),
+  });
+
+  return result.user;
 };
 
 export const AuthService = {
@@ -295,4 +355,5 @@ export const AuthService = {
   resetPasswordToDB,
   changePasswordToDB,
   resendOtpToDB,
+  registerUserFromDB,
 };

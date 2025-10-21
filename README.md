@@ -1,5 +1,7 @@
 # Project Name
 
+[![codecov](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace/branch/main/graph/badge.svg)](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace)
+
 This is a template project for backend development using Typescript, Node.js, Express, Mongoose, Bcrypt, JWT, NodeMailer, Multer, ESLint, and Prettier. The aim is to reduce setup time for new backend projects.
 
 ## Features

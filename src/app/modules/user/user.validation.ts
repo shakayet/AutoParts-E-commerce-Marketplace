@@ -6,7 +6,7 @@ const createUserZodSchema = z.object({
     contact: z.string({ required_error: 'Contact is required' }),
     email: z.string({ required_error: 'Email is required' }),
     password: z.string({ required_error: 'Password is required' }),
-    location: z.string({ required_error: 'Location is required' }),
+    location: z.string().optional(),
     profile: z.string().optional(),
   }),
 });
@@ -20,7 +20,22 @@ const updateUserZodSchema = z.object({
   image: z.string().optional(),
 });
 
+const changePasswordZodSchema = z.object({
+  body: z.object({
+    oldPassword: z.string({ required_error: 'Old password is required' }),
+    newPassword: z.string({ required_error: 'New password is required' }),
+  }),
+});
+
+const blockUnblockZodSchema = z.object({
+  body: z.object({
+    block: z.boolean({ required_error: 'Block flag is required' }),
+  }),
+});
+
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
+  changePasswordZodSchema,
+  blockUnblockZodSchema,
 };
