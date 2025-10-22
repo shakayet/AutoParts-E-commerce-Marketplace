@@ -44,7 +44,6 @@ const reviewCategoryRequestToDB = async (id: string, status: 'approved' | 'rejec
   if (!req) throw new ApiError(StatusCodes.NOT_FOUND, 'Category request not found');
 
   req.status = status as 'approved' | 'rejected' | 'pending';
-  req.adminComment = adminComment;
   await req.save();
 
   if (status === 'approved') {

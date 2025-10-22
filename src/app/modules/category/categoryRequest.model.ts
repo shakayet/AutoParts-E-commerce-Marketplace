@@ -8,7 +8,6 @@ const categoryRequestSchema = new Schema<ICategoryRequest>(
     name: { type: String, required: true },
     description: { type: String },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-    adminComment: { type: String },
   },
   { timestamps: true }
 );

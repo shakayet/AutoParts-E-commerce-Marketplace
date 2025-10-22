@@ -3,27 +3,28 @@ import { CategoryController } from './category.controller';
 import { CategoryValidation } from './category.validation';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
+import { USER_ROLES } from '../../../enums/user';
 
 const router = express.Router();
 
 router
 	.route('/')
 	.get(CategoryController.getCategories)
-	.post(auth('admin'), validateRequest(CategoryValidation.createCategoryZodSchema), CategoryController.createCategory);
+	.post(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), validateRequest(CategoryValidation.createCategoryZodSchema), CategoryController.createCategory);
 
 router
 	.route('/:id')
-	.patch(auth('admin'), validateRequest(CategoryValidation.updateCategoryZodSchema), CategoryController.updateCategory)
-	.delete(auth('admin'), CategoryController.deleteCategory);
+	.patch(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), validateRequest(CategoryValidation.updateCategoryZodSchema), CategoryController.updateCategory)
+	.delete(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), CategoryController.deleteCategory);
 
 // requests
 router
 	.route('/request')
-	.post(auth(), validateRequest(CategoryValidation.createCategoryRequestZodSchema), CategoryController.createCategoryRequest)
-	.get(auth('admin'), CategoryController.getCategoryRequests);
+	.post(auth(USER_ROLES.USER), validateRequest(CategoryValidation.createCategoryRequestZodSchema), CategoryController.createCategoryRequest)
+	.get(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), CategoryController.getCategoryRequests);
 
 router
 	.route('/request/:id/review')
-	.patch(auth('admin'), validateRequest(CategoryValidation.reviewCategoryRequestZodSchema), CategoryController.reviewCategoryRequest);
+	.patch(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), validateRequest(CategoryValidation.reviewCategoryRequestZodSchema), CategoryController.reviewCategoryRequest);
 
 export const CategoryRoutes = router;
