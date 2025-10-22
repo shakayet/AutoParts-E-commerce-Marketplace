@@ -2,7 +2,6 @@
 import { model, Schema } from 'mongoose';
 import { ProductModel, IProduct } from './product.interface';
 
-
 const productSchema = new Schema<IProduct, ProductModel>(
   {
     title: { type: String, required: true, text: true },
@@ -17,23 +16,9 @@ const productSchema = new Schema<IProduct, ProductModel>(
     discount: { type: Number, default: 0 },
     mainImage: { type: String },
     galleryImages: [{ type: String }],
-    sellerName: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
-    productRating: {
-      type: {
-        oneStar: { type: Number, default: 0 },
-        twoStar: { type: Number, default: 0 },
-        threeStar: { type: Number, default: 0 },
-        fourStar: { type: Number, default: 0 },
-        fiveStar: { type: Number, default: 0 },
-      },
-      default: {
-        oneStar: 0,
-        twoStar: 0,
-        threeStar: 0,
-        fourStar: 0,
-        fiveStar: 0,
-      },
-    },
+    sellerId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
+    averageRating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
   },
   { timestamps: true }

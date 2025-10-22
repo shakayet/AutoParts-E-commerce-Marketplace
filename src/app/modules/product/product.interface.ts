@@ -1,13 +1,5 @@
 import { Model } from 'mongoose';
 
-export type IProductRating = {
-  oneStar: number;
-  twoStar: number;
-  threeStar: number;
-  fourStar: number;
-  fiveStar: number;
-}
-
 export type IProduct = {
   title: string;
   category: string;
@@ -21,10 +13,14 @@ export type IProduct = {
   discount?: number;
   mainImage?: string;
   galleryImages?: string[];
-  sellerName: string;
+  sellerId: string;
   coordinates?: { lat?: number; lng?: number };
-  productRating?: IProductRating;
+  averageRating?: number;
+  totalRatings?: number;
+  sellerRating?: number;
   isBlocked?: boolean;
 };
 
-export type ProductModel = Model<IProduct>;
+export type ProductModel = {
+  // add statics if needed later
+} & Model<IProduct>;

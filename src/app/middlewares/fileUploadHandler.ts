@@ -28,6 +28,12 @@ const fileUploadHandler = () => {
         case 'image':
           uploadDir = path.join(baseUploadDir, 'image');
           break;
+        case 'mainImage':
+          uploadDir = path.join(baseUploadDir, 'image');
+          break;
+        case 'galleryImages':
+          uploadDir = path.join(baseUploadDir, 'image');
+          break;    
         case 'media':
           uploadDir = path.join(baseUploadDir, 'media');
           break;
@@ -58,7 +64,7 @@ const fileUploadHandler = () => {
 
   //file filter
   const filterFilter = (req: Request, file: MulterFile, cb: FileFilterCallback) => {
-    if (file.fieldname === 'image') {
+    if (file.fieldname === 'image' || file.fieldname === 'mainImage' || file.fieldname === 'galleryImages') {
       if (
         file.mimetype === 'image/jpeg' ||
         file.mimetype === 'image/png' ||
@@ -100,6 +106,8 @@ const fileUploadHandler = () => {
     fileFilter: filterFilter,
   }).fields([
     { name: 'image', maxCount: 6 },
+    { name: 'mainImage', maxCount: 1 },
+    { name: 'galleryImages', maxCount: 6 },
     { name: 'media', maxCount: 3 },
     { name: 'doc', maxCount: 3 },
   ]);

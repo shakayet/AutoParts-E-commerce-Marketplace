@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import auth from '../../middlewares/auth';
 import fileUploadHandler from '../../middlewares/fileUploadHandler';
 import validateRequest from '../../middlewares/validateRequest';
@@ -14,8 +14,12 @@ router
   .post(
     auth(USER_ROLES.USER),
     fileUploadHandler(),
-    validateRequest(ProductValidation.createProductZodSchema),
-    ProductController.createProduct
+     (req: Request, res: Response, next: NextFunction) => {
+    req.body = ProductValidation.createProductZodSchema.parse(
+      JSON.parse(req?.body?.data)
+    );
+    return ProductController.createProduct(req, res, next);
+  }
   );
 
 router
@@ -24,8 +28,13 @@ router
   .patch(
     auth(USER_ROLES.USER),
     fileUploadHandler(),
-    validateRequest(ProductValidation.updateProductZodSchema),
-    ProductController.updateProduct
+    // validateRequest(ProductValidation.updateProductZodSchema),
+    (req: Request, res: Response, next: NextFunction) => {
+    req.body = ProductValidation.createProductZodSchema.parse(
+      JSON.parse(req?.body?.data)
+    );
+      return ProductController.updateProduct(req, res, next);
+    }
   )
   .delete(auth(USER_ROLES.USER), ProductController.deleteProduct);
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -7,19 +8,34 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { ProductService } from './product.service';
+import { Express } from 'express';
 
-type MulterFile = { fieldname: string; originalname: string; filename: string; mimetype: string };
+type MulterFile = Express.Multer.File;
 
-const createProduct = catchAsync(async (req: Request, res: Response) => {
-  // files handled by middleware
-  const files = req.files as Record<string, MulterFile[] | undefined> | undefined;
-  const images = files?.image ?? [];
+interface MulterRequest extends Request {
+  files: {
+    mainImage?: MulterFile[];
+    galleryImages?: MulterFile[];
+  };
+}
 
-  const mainImage = images.length > 0 ? `/${'image'}/${images[0].filename}` : undefined;
-  const galleryImages = images.length > 1 ? images.slice(1, 6).map((f: MulterFile) => `/${'image'}/${f.filename}`) : undefined;
+export const createProduct = catchAsync(async (req: Request, res: Response) => {
+  const { mainImage: a, galleryImages: b } = (req as MulterRequest).files;
+
+  const mainImage =
+    a && a.length > 0 ? `/${'image'}/${a[0].filename}` : undefined;
+
+  const galleryImages =
+    b && b.length > 0 ? b.map((f: MulterFile) => `/${'image'}/${f.filename}`) : undefined;
 
   const body = req.body as Partial<IProduct>;
-  const payload: Partial<IProduct> = { ...body, mainImage, galleryImages, sellerName: req.user?.name };
+  const payload: Partial<IProduct> = {
+    ...body,
+    mainImage,
+    galleryImages,
+    sellerId: req.user?.id,
+  };
+
   const result = await ProductService.createProductToDB(payload);
 
   sendResponse(res, {

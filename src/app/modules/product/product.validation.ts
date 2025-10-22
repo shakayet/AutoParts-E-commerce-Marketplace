@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 const createProductZodSchema = z.object({
-  body: z.object({
     title: z.string({ required_error: 'Title is required' }),
     category: z.string({ required_error: 'Category is required' }),
     brand: z.string().optional(),
@@ -17,7 +16,6 @@ const createProductZodSchema = z.object({
     coordinates: z
       .object({ lat: z.number().optional(), lng: z.number().optional() })
       .optional(),
-  }),
 });
 
 const updateProductZodSchema = z.object({
