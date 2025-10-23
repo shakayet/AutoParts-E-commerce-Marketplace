@@ -11,8 +11,21 @@ router.route('/:productId').get(ReviewController.getReviews);
 
 router
   .route('/')
-  .post(auth(USER_ROLES.USER), validateRequest(ReviewValidation.createReviewZodSchema), ReviewController.createReview);
+  .post(
+    auth(USER_ROLES.USER),
+    validateRequest(ReviewValidation.createReviewZodSchema),
+    ReviewController.createReview
+  );
 
-router.route('/:id').delete(auth(USER_ROLES.USER), ReviewController.deleteReview);
+router
+  .route('/product/:productId')
+  .get(
+    auth(USER_ROLES.USER, USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+    ReviewController.getSingleProductReview
+  );
+
+router
+  .route('/:id')
+  .delete(auth(USER_ROLES.USER), ReviewController.deleteReview);
 
 export const ReviewRoutes = router;

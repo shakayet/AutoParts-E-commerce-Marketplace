@@ -4,8 +4,12 @@ import { IReview, ReviewModel } from './review.interface';
 
 const reviewSchema = new Schema<IReview, ReviewModel>(
   {
-  productId: { type: (Schema.Types.ObjectId as any), ref: 'Product', required: true },
-  userId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
+    productId: {
+      type: Schema.Types.ObjectId as any,
+      ref: 'Product',
+      required: true,
+    },
+    userId: { type: Schema.Types.ObjectId as any, ref: 'User', required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
   },
@@ -14,4 +18,7 @@ const reviewSchema = new Schema<IReview, ReviewModel>(
 
 reviewSchema.index({ productId: 1, userId: 1 }, { unique: true });
 
-export const Review = model<IReview, ReviewModel>('Review', reviewSchema as any);
+export const Review = model<IReview, ReviewModel>(
+  'Review',
+  reviewSchema as any
+);

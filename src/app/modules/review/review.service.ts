@@ -7,7 +7,10 @@ import { Notification } from '../notification/notification.model';
 import ApiError from '../../../errors/ApiError';
 import { StatusCodes } from 'http-status-codes';
 
-const createReviewToDB = async (userId: string, payload: { productId: string; rating: number; comment?: string }) => {
+const createReviewToDB = async (
+  userId: string,
+  payload: { productId: string; rating: number; comment?: string }
+) => {
   const { productId, rating, comment } = payload;
 
   // ensure product exists
@@ -16,14 +19,19 @@ const createReviewToDB = async (userId: string, payload: { productId: string; ra
 
   // ensure user hasn't already reviewed
   const existing = await Review.findOne({ productId, userId });
-  if (existing) throw new ApiError(StatusCodes.BAD_REQUEST, 'You have already reviewed this product');
+  if (existing)
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'You have already reviewed this product'
+    );
 
   // create review
   const review = await Review.create({ productId, userId, rating, comment });
 
   // update product avg rating and totalRatings
   const totalRatings = (product.totalRatings || 0) + 1;
-  const totalRatingScore = (product.averageRating || 0) * (product.totalRatings || 0) + rating;
+  const totalRatingScore =
+    (product.averageRating || 0) * (product.totalRatings || 0) + rating;
   const averageRating = totalRatingScore / totalRatings;
 
   product.averageRating = averageRating;
@@ -49,7 +57,9 @@ const createReviewToDB = async (userId: string, payload: { productId: string; ra
 };
 
 const getReviewsForProduct = async (productId: string) => {
-  const reviews = await Review.find({ productId }).populate('userId', 'name email').sort({ createdAt: -1 });
+  const reviews = await Review.find({ productId })
+    .populate('userId', 'name email')
+    .sort({ createdAt: -1 });
   return reviews;
 };
 
@@ -60,8 +70,10 @@ const deleteReview = async (reviewId: string, userId: string) => {
   const product = await Product.findById(rev.productId);
   if (product) {
     const totalRatings = Math.max(0, (product.totalRatings || 1) - 1);
-    const totalRatingScore = (product.averageRating || 0) * (product.totalRatings || 0) - rev.rating;
-    const averageRating = totalRatings === 0 ? 0 : totalRatingScore / totalRatings;
+    const totalRatingScore =
+      (product.averageRating || 0) * (product.totalRatings || 0) - rev.rating;
+    const averageRating =
+      totalRatings === 0 ? 0 : totalRatingScore / totalRatings;
     product.averageRating = averageRating;
     product.totalRatings = totalRatings;
     await product.save();
@@ -70,4 +82,8 @@ const deleteReview = async (reviewId: string, userId: string) => {
   await Review.deleteOne({ _id: reviewId });
 };
 
-export const ReviewService = { createReviewToDB, getReviewsForProduct, deleteReview };
+export const ReviewService = {
+  createReviewToDB,
+  getReviewsForProduct,
+  deleteReview,
+};
