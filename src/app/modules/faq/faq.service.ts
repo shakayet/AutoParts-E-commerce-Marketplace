@@ -23,4 +23,9 @@ const getFAQsFromDB = async () => {
   return await FAQ.find({ isActive: true }).sort({ createdAt: -1 });
 };
 
-export const FAQService = { createFAQToDB, updateFAQToDB, deleteFAQFromDB, getFAQsFromDB };
+export const FAQService = {
+  createFAQToDB,
+  updateFAQToDB,
+  deleteFAQFromDB,
+  getFAQsFromDB,
+};

@@ -7,6 +7,7 @@ const faqSchema = new Schema<IFAQ>(
     question: { type: String, required: true },
     answer: { type: String, required: true },
     image: { type: String, default: true },
+    isActive: { type: Boolean, default: true, required: true },
   },
   { timestamps: true }
 );

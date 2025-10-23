@@ -1,11 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import { Request, Response } from 'express';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { FAQService } from './faq.service';
 import { StatusCodes } from 'http-status-codes';
+import { Express } from 'express';
+import { getSingleFilePath } from '../../../shared/getFilePath';
+
+type MulterFile = Express.Multer.File;
 
 const createFAQ = catchAsync(async (req: Request, res: Response) => {
-  const result = await FAQService.createFAQToDB(req.body);
+  const image = getSingleFilePath(req.files as any, 'image');
+  const data = {
+    image,
+    ...req.body,
+  };
+
+  const result = await FAQService.createFAQToDB(data);
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.CREATED,
@@ -16,7 +31,14 @@ const createFAQ = catchAsync(async (req: Request, res: Response) => {
 
 const updateFAQ = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await FAQService.updateFAQToDB(id, req.body);
+
+  const image = getSingleFilePath(req.files as any, 'image');
+  const data = {
+    image,
+    ...req.body,
+  };
+
+  const result = await FAQService.updateFAQToDB(id, data);
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
