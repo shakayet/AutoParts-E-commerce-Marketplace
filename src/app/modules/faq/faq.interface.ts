@@ -1,7 +1,7 @@
 export type IFAQ = {
   question: string;
   answer: string;
-  isActive?: boolean;
+  image?: string;
 };
 
 export type FAQModel = object;

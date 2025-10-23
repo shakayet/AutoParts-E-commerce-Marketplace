@@ -11,11 +11,6 @@ const createProductZodSchema = z.object({
     warranty: z.string().optional(),
     price: z.number({ required_error: 'Price is required' }),
     discount: z.number().optional(),
-    stock: z.number().optional(),
-    location: z.string().optional(),
-    coordinates: z
-      .object({ lat: z.number().optional(), lng: z.number().optional() })
-      .optional(),
 });
 
 const updateProductZodSchema = z.object({
@@ -30,11 +25,6 @@ const updateProductZodSchema = z.object({
     warranty: z.string().optional(),
     price: z.number().optional(),
     discount: z.number().optional(),
-    stock: z.number().optional(),
-    location: z.string().optional(),
-    coordinates: z
-      .object({ lat: z.number().optional(), lng: z.number().optional() })
-      .optional(),
   }),
 });
 
