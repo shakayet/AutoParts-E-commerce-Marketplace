@@ -84,6 +84,8 @@ const getProductById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductService.getProductByIdFromDB(id);
 
+  
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
