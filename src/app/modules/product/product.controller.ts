@@ -9,6 +9,7 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { ProductService } from './product.service';
 import { Express } from 'express';
+import { Product } from './product.model';
 
 type MulterFile = Express.Multer.File;
 
@@ -26,7 +27,9 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     a && a.length > 0 ? `/${'image'}/${a[0].filename}` : undefined;
 
   const galleryImages =
-    b && b.length > 0 ? b.map((f: MulterFile) => `/${'image'}/${f.filename}`) : undefined;
+    b && b.length > 0
+      ? b.map((f: MulterFile) => `/${'image'}/${f.filename}`)
+      : undefined;
 
   const body = req.body as Partial<IProduct>;
   const payload: Partial<IProduct> = {
@@ -48,11 +51,17 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
 
 const updateProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const files = req.files as Record<string, MulterFile[] | undefined> | undefined;
+  const files = req.files as
+    | Record<string, MulterFile[] | undefined>
+    | undefined;
   const images = files?.image ?? [];
 
-  const mainImage = images.length > 0 ? `/${'image'}/${images[0].filename}` : undefined;
-  const galleryImages = images.length > 1 ? images.slice(1, 6).map((f: MulterFile) => `/${'image'}/${f.filename}`) : undefined;
+  const mainImage =
+    images.length > 0 ? `/${'image'}/${images[0].filename}` : undefined;
+  const galleryImages =
+    images.length > 1
+      ? images.slice(1, 6).map((f: MulterFile) => `/${'image'}/${f.filename}`)
+      : undefined;
 
   const body = req.body as Partial<IProduct>;
   const payload: Partial<IProduct> = { ...body };
@@ -84,13 +93,45 @@ const getProductById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await ProductService.getProductByIdFromDB(id);
 
-  
+  if (!result) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: StatusCodes.NOT_FOUND,
+      message: 'Product not found',
+      data: null,
+    });
+  }
+
+  // Calculate seller rating (corrected logic)
+  const { sellerId } = result;
+  const allProducts = await Product.find({ sellerId });
+
+  let sellerRating = 0;
+  if (allProducts.length > 0) {
+    const totalRatingsSum = allProducts.reduce(
+      (sum, product) => sum + (product.averageRating || 0) * (product.totalRatings || 0),
+      0
+    );
+
+    const totalRatingsCount = allProducts.reduce(
+      (sum, product) => sum + (product.totalRatings || 0),
+      0
+    );
+
+    sellerRating = totalRatingsCount > 0 ? totalRatingsSum / totalRatingsCount : 0;
+  }
+
+  // Add sellerRating to the response without saving to DB
+  const responseData = {
+    ...(result as any).toObject(),
+    sellerRating: Number(sellerRating.toFixed(2))
+  };
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Product retrieved successfully',
-    data: result,
+    data: responseData,
   });
 });
 

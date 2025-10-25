@@ -24,7 +24,7 @@ const deleteProductFromDB = async (id: string): Promise<void> => {
 };
 
 const getProductByIdFromDB = async (id: string): Promise<IProduct> => {
-  const product = await Product.findById(id).populate('sellerId', 'name email');
+  const product = await Product.findById(id).populate('sellerId', 'name email location');
   if (!product) throw new ApiError(StatusCodes.NOT_FOUND, 'Product not found');
   return product as unknown as IProduct;
 };

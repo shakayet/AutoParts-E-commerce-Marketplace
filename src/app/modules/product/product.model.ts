@@ -19,6 +19,7 @@ const productSchema = new Schema<IProduct, ProductModel>(
     sellerId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
     averageRating: { type: Number, default: 0 },
     totalRatings: { type: Number, default: 0 },
+    sellerRating: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
   },
   { timestamps: true }
