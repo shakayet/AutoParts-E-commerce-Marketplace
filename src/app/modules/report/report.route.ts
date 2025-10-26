@@ -24,7 +24,7 @@ router
 router
   .route('/')
   .get(
-    auth(USER_ROLES.ADMIN),
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(ReportValidation.getReportsZodSchema),
     ReportController.getReports
   );

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 const createReportZodSchema = z.object({
-    type: z.enum(['product', 'seller']),
-    targetId: z.string({ required_error: 'Target id is required' }),
-    reason: z.string({ required_error: 'Reason is required' }),
-    image: z.string().optional(),
+  type: z.enum(['product', 'seller']),
+  targetId: z.string({ required_error: 'Target id is required' }),
+  reason: z.string({ required_error: 'Reason is required' }),
+  image: z.string().optional(),
 });
 
 const getReportsZodSchema = z.object({
