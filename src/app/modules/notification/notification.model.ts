@@ -4,7 +4,7 @@ import { INotification } from './notification.interface';
 
 const notificationSchema = new Schema<INotification>(
   {
-  user: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
+    user: { type: Schema.Types.ObjectId as any, ref: 'User', required: true },
     type: { type: String, required: true },
     data: { type: Schema.Types.Mixed },
     isRead: { type: Boolean, default: false },
@@ -12,4 +12,7 @@ const notificationSchema = new Schema<INotification>(
   { timestamps: true }
 );
 
-export const Notification = model<INotification>('Notification', notificationSchema as any);
+export const Notification = model<INotification>(
+  'Notification',
+  notificationSchema as any
+);

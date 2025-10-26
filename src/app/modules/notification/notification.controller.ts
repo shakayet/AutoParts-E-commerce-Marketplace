@@ -12,7 +12,10 @@ const getNotifications = catchAsync(async (req: Request, res: Response) => {
   if (page) opts.page = Number(page);
   if (limit) opts.limit = Number(limit);
   if (isRead !== undefined) opts.isRead = isRead === 'true';
-  const result = await NotificationService.getNotificationsForUser(user.id, opts);
+  const result = await NotificationService.getNotificationsForUser(
+    user.id,
+    opts
+  );
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -44,24 +47,22 @@ const markAllRead = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getUnreadCount = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as any;
-  const count = await NotificationService.getUnreadCount(user.id);
-  sendResponse(res, { success: true, statusCode: StatusCodes.OK, message: 'Unread count', data: { count } });
-});
-
-const markMultipleRead = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as any;
-  const { ids } = req.body as { ids: string[] };
-  const result = await NotificationService.markMultipleAsRead(ids || [], user.id);
-  sendResponse(res, { success: true, statusCode: StatusCodes.OK, message: 'Notifications marked', data: result });
-});
 
 const deleteNotification = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;
   const { id } = req.params;
   const result = await NotificationService.deleteNotification(id, user.id);
-  sendResponse(res, { success: true, statusCode: StatusCodes.OK, message: 'Notification deleted', data: result });
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Notification deleted',
+    data: result,
+  });
 });
 
-export const NotificationController = { getNotifications, markRead, markAllRead, getUnreadCount, markMultipleRead, deleteNotification };
+export const NotificationController = {
+  getNotifications,
+  markRead,
+  markAllRead,
+  deleteNotification,
+};

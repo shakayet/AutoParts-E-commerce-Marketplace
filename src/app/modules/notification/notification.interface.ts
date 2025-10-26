@@ -7,4 +7,3 @@ export type INotification = {
 };
 
 export type NotificationModel = object;
-

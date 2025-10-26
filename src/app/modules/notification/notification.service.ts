@@ -8,7 +8,10 @@ import { Notification } from './notification.model';
 
 type FetchOptions = { page?: number; limit?: number; isRead?: boolean };
 
-const getNotificationsForUser = async (userId: string, opts: FetchOptions = {}) => {
+const getNotificationsForUser = async (
+  userId: string,
+  opts: FetchOptions = {}
+) => {
   const page = Math.max(1, opts.page || 1);
   const limit = Math.min(100, opts.limit || 20);
   const skip = (page - 1) * limit;
@@ -21,10 +24,6 @@ const getNotificationsForUser = async (userId: string, opts: FetchOptions = {}) 
   ]);
 
   return { items, total, page, limit };
-};
-
-const getUnreadCount = async (userId: string) => {
-  return await Notification.countDocuments({ user: userId, isRead: false });
 };
 
 const markAsRead = async (id: string, userId: string) => {
@@ -43,19 +42,11 @@ const markAsRead = async (id: string, userId: string) => {
   return n;
 };
 
-const markMultipleAsRead = async (ids: string[], userId: string) => {
-  const res = await Notification.updateMany({ _id: { $in: ids }, user: userId, isRead: false }, { $set: { isRead: true } });
-  try {
-    const io = (global as any).io;
-    if (io) io.to(String(userId)).emit('NOTIFICATIONS_READ', { ids });
-  } catch (err) {
-    console.error('Error emitting NOTIFICATIONS_READ event:', err);
-  }
-  return res;
-};
-
 const markAllAsRead = async (userId: string) => {
-  const res = await Notification.updateMany({ user: userId, isRead: false }, { $set: { isRead: true } });
+  const res = await Notification.updateMany(
+    { user: userId, isRead: false },
+    { $set: { isRead: true } }
+  );
   try {
     const io = (global as any).io;
     if (io) io.to(String(userId)).emit('NOTIFICATIONS_READ_ALL', {});
@@ -72,9 +63,7 @@ const deleteNotification = async (id: string, userId: string) => {
 
 export const NotificationService = {
   getNotificationsForUser,
-  getUnreadCount,
   markAsRead,
-  markMultipleAsRead,
   markAllAsRead,
   deleteNotification,
 };
