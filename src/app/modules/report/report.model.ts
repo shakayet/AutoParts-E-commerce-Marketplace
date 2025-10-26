@@ -4,10 +4,19 @@ import { IReport } from './report.interface';
 
 const reportSchema = new Schema<IReport>(
   {
-  reporterId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
+    reporterId: {
+      type: Schema.Types.ObjectId as any,
+      ref: 'User',
+    },
     type: { type: String, enum: ['product', 'seller'], required: true },
-  targetId: { type: (Schema.Types.ObjectId as any), required: true },
+    targetId: { type: Schema.Types.ObjectId as any, required: true },
     reason: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ['pending', 'reviewed', 'dismissed'],
+      default: 'pending',
+    },
+    image: { type: String, required: true },
   },
   { timestamps: true }
 );

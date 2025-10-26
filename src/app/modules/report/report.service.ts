@@ -4,19 +4,21 @@
 import { Report } from './report.model';
 import { Notification } from '../notification/notification.model';
 
-const createReportToDB = async (reporterId: string, payload: { type: 'product' | 'seller'; targetId: string; reason: string }) => {
+const createReportToDB = async (
+  reporterId: string,
+  payload: { type: 'product' | 'seller'; targetId: string; reason: string }
+) => {
   const result = await Report.create({ reporterId, ...payload });
 
   // create admin notification
   const notification = await Notification.create({
-    user: null as unknown as string | null, // system/admin recipient; front-end/admin dashboard will query reports
+    user: reporterId, // system/admin recipient; front-end/admin dashboard will query reports
     type: 'PRODUCT_REPORTED',
     data: { reportId: result._id, ...payload },
   });
 
   // emit global event
   try {
-   
     const io = (global as any).io;
     if (io) io.emit('REPORT_CREATED', notification);
   } catch (err) {

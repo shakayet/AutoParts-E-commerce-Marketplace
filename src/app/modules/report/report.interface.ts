@@ -3,6 +3,8 @@ export type IReport = {
   type: 'product' | 'seller';
   targetId: string; // productId or seller userId
   reason: string;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  image: string;
   createdAt?: Date;
 };
 
