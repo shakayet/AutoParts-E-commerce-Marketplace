@@ -32,14 +32,14 @@ router
 
 router
   .route('/')
-  .get(auth(USER_ROLES.ADMIN), UserController.getAllUsers);
+  .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), UserController.getAllUsers);
 
-router.route('/:id').get(auth(USER_ROLES.ADMIN), UserController.getUserById);
+router.route('/:id').get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), UserController.getUserById);
 
 router
   .route('/change-password')
   .patch(
-    auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+    auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(UserValidation.changePasswordZodSchema),
     UserController.changePassword
   );
@@ -47,7 +47,7 @@ router
 router
   .route('/:id/block')
   .patch(
-    auth(USER_ROLES.ADMIN),
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(UserValidation.blockUnblockZodSchema),
     UserController.blockUnblockUser
   );
