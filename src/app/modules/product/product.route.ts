@@ -10,17 +10,22 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(validateRequest(ProductValidation.productQueryZodSchema), ProductController.getProducts)
+  .get(
+    validateRequest(ProductValidation.productQueryZodSchema),
+    ProductController.getProducts
+  )
   .post(
     auth(USER_ROLES.USER),
     fileUploadHandler(),
-     (req: Request, res: Response, next: NextFunction) => {
-    req.body = ProductValidation.createProductZodSchema.parse(
-      JSON.parse(req?.body?.data)
-    );
-    return ProductController.createProduct(req, res, next);
-  }
+    (req: Request, res: Response, next: NextFunction) => {
+      req.body = ProductValidation.createProductZodSchema.parse(
+        JSON.parse(req?.body?.data)
+      );
+      return ProductController.createProduct(req, res, next);
+    }
   );
+
+router.route('/advanced').get(ProductController.getAdvancedProducts);
 
 router
   .route('/:id')
@@ -30,9 +35,9 @@ router
     fileUploadHandler(),
     // validateRequest(ProductValidation.updateProductZodSchema),
     (req: Request, res: Response, next: NextFunction) => {
-    req.body = ProductValidation.createProductZodSchema.parse(
-      JSON.parse(req?.body?.data)
-    );
+      req.body = ProductValidation.createProductZodSchema.parse(
+        JSON.parse(req?.body?.data)
+      );
       return ProductController.updateProduct(req, res, next);
     }
   )

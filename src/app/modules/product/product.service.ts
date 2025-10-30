@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
 import { Product } from './product.model';
 import { IProduct } from './product.interface';
+import QueryBuilder from '../../builder/QueryBuilder';
 
 type PaginatedResult<T> = { data: T[]; meta: { total: number; page: number; limit: number; totalPages: number } };
 
@@ -62,6 +63,39 @@ const getRelatedProducts = async (productId: string): Promise<IProduct[]> => {
   return related as unknown as IProduct[];
 };
 
+const getAdvancedProductsFromDB = async (filter: any = {}): Promise<PaginatedResult<IProduct>> => {
+  // Build base query
+  const searchableFields = ['name', 'description', 'brand', 'category'];
+  
+  const queryBuilder = new QueryBuilder(
+    Product.find({ isBlocked: false }),
+    filter
+  )
+    .search(searchableFields)
+    .filter()
+    .priceRange()
+    .locationRadius()
+    .sort()
+    .paginate()
+    .fields();
+
+  // Get products and total count
+  const [products, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: products as unknown as IProduct[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
+};
+
 export const ProductService = {
   createProductToDB,
   updateProductToDB,
@@ -69,4 +103,5 @@ export const ProductService = {
   getProductByIdFromDB,
   getProductsFromDB,
   getRelatedProducts,
+  getAdvancedProductsFromDB,
 };

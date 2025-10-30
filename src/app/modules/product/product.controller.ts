@@ -165,6 +165,24 @@ const getRelatedProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAdvancedProducts = catchAsync(async (req: Request, res: Response) => {
+  const filters = req.query;
+  const result = await ProductService.getAdvancedProductsFromDB(filters);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Products retrieved successfully',
+    data: result.data,
+    pagination: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPages,
+      total: result.meta.total,
+    },
+  });
+});
+
 export const ProductController = {
   createProduct,
   updateProduct,
@@ -172,4 +190,5 @@ export const ProductController = {
   getProductById,
   getProducts,
   getRelatedProducts,
+  getAdvancedProducts,
 };
