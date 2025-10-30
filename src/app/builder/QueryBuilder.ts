@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FilterQuery, Query } from 'mongoose';
 
 class QueryBuilder<T> {
@@ -30,10 +31,50 @@ class QueryBuilder<T> {
   //filtering
   filter() {
     const queryObj = { ...this.query };
-    const excludeFields = ['searchTerm', 'sort', 'page', 'limit', 'fields'];
+    const excludeFields = ['searchTerm', 'sort', 'page', 'limit', 'fields', 'lowestPrice', 'highestPrice', 'radius', 'lat', 'lng'];
     excludeFields.forEach(el => delete queryObj[el]);
 
     this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
+    return this;
+  }
+
+  //price range filtering
+  priceRange() {
+    if (this.query.lowestPrice || this.query.highestPrice) {
+      const priceFilter: any = {};
+      
+      if (this.query.lowestPrice) {
+        priceFilter.$gte = Number(this.query.lowestPrice);
+      }
+      if (this.query.highestPrice) {
+        priceFilter.$lte = Number(this.query.highestPrice);
+      }
+      
+      this.modelQuery = this.modelQuery.find({ 
+        price: priceFilter 
+      } as FilterQuery<T>);
+    }
+    return this;
+  }
+
+  //location radius filtering
+  locationRadius() {
+    if (this.query.lat && this.query.lng && this.query.radius) {
+      const lat = Number(this.query.lat);
+      const lng = Number(this.query.lng);
+      const radius = Number(this.query.radius); // in kilometers
+
+      // Convert radius to radians (MongoDB uses radians for $geoWithin with $centerSphere)
+      const radiusInRadians = radius / 6378.1; // 6378.1 is the radius of the Earth in km
+
+      this.modelQuery = this.modelQuery.find({
+        location: {
+          $geoWithin: {
+            $centerSphere: [[lng, lat], radiusInRadians],
+          },
+        },
+      } as FilterQuery<T>);
+    }
     return this;
   }
 
