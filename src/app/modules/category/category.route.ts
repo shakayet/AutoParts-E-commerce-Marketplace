@@ -14,6 +14,7 @@ router
 
 router
 	.route('/:id')
+	.get(CategoryController.getSingleCategory)
 	.patch(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), validateRequest(CategoryValidation.updateCategoryZodSchema), CategoryController.updateCategory)
 	.delete(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), CategoryController.deleteCategory);
 

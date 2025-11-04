@@ -25,6 +25,12 @@ const deleteCategoryFromDB = async (id: string) => {
   if (!res) throw new ApiError(StatusCodes.NOT_FOUND, 'Category not found');
 };
 
+const getSingleCategoryFromDB = async (id: string) => {
+  const res = await Category.findOne({ _id: id });
+  if (!res) throw new ApiError(StatusCodes.NOT_FOUND, 'Category not found');
+  return res;
+};
+
 const getCategoriesFromDB = async () => {
   return await Category.find({}).sort({ name: 1 });
 };
@@ -88,4 +94,5 @@ export const CategoryService = {
   createCategoryRequestToDB,
   getCategoryRequestsFromDB,
   reviewCategoryRequestToDB,
+  getSingleCategoryFromDB,
 };
