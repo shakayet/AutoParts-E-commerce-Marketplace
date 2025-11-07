@@ -13,7 +13,6 @@ const router = express.Router();
 router
   .route('/')
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.USER),
     FAQController.getFAQs
   )
   .post(
