@@ -20,7 +20,6 @@ router
 router
   .route('/product/:productId')
   .get(
-    auth(USER_ROLES.USER, USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
     ReviewController.getSingleProductReview
   );
 
