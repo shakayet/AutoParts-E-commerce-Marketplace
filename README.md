@@ -88,7 +88,7 @@ Ensure you have the following installed:
    # Email
    EMAIL_FROM=email@gmail.com
    EMAIL_USER=email@gmail.com
-   EMAIL_PASS=mkqcfjeqloothyax
+   EMAIL_PASS=mkqcfjeqloothyax x
    EMAIL_PORT=587
    EMAIL_HOST=smtp.gmail.com
    ```
