@@ -10,7 +10,6 @@ export type IUser = {
   whatsappNumber?: string;
   email: string;
   password: string;
-  location: string;
   image?: string;
   status: 'active' | 'delete';
   verified: boolean;
