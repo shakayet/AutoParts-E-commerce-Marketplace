@@ -12,10 +12,6 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: true,
     },
-    phone: {
-      type: String,
-      required: false,
-    },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
