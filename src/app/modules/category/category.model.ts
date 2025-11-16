@@ -5,7 +5,9 @@ import { ICategory } from './category.interface';
 const categorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, unique: true },
-    slug: { type: String, required: false, unique: true },
+    slug: { type: String, required: true, unique: true },
+    icon: { type: String, required: false, unique: true },
+    image: { type: String, required: false },
     description: { type: String },
   },
   { timestamps: true }

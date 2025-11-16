@@ -1,6 +1,8 @@
 export type ICategory = {
   name: string;
-  slug?: string;
+  slug: string;
+  icon?: string;
+  image?: string;
   description?: string;
   createdAt?: Date;
 };
