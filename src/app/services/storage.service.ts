@@ -62,7 +62,6 @@ class StorageService {
         Key: key,
         Body: uploadBuffer,
         ContentType: contentType,
-        ACL: 'public-read',
       }),
     );
 
