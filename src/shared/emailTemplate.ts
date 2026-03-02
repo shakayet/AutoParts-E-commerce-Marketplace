@@ -20,13 +20,13 @@ const baseTemplate = (title: string, bodyContent: string) => {
       body {
         margin: 0;
         padding: 0;
-        background-color: #f4f4f5;
+        background-color: #ffffff;
       }
 
       .wrapper {
         width: 100%;
         table-layout: fixed;
-        background-color: #f4f4f5;
+        background-color: #ffffff;
         padding: 24px 0;
       }
 
@@ -58,6 +58,14 @@ const baseTemplate = (title: string, bodyContent: string) => {
         max-width: 80px;
         height: auto;
         border-radius: 12px;
+      }
+
+      .header-divider {
+        margin: 12px auto 0;
+        width: 100%;
+        max-width: 80%;
+        height: 1px;
+        background: linear-gradient(to right, transparent, #1d4ed8, transparent);
       }
 
       .content {
@@ -121,6 +129,7 @@ const baseTemplate = (title: string, bodyContent: string) => {
                     : ''
                 }
                 <div class="brand-name">${projectName}</div>
+                <div class="header-divider"></div>
               </td>
             </tr>
             <tr>
