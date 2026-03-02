@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import process from 'process';
+
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 export default {
@@ -19,6 +20,10 @@ export default {
     port: process.env.EMAIL_PORT,
     host: process.env.EMAIL_HOST,
     pass: process.env.EMAIL_PASS,
+  },
+  branding: {
+    logoUrl: process.env.BRAND_LOGO_URL,
+    projectName: process.env.PROJECT_NAME || 'JBAY',
   },
   super_admin: {
     email: process.env.SUPER_ADMIN_EMAIL,

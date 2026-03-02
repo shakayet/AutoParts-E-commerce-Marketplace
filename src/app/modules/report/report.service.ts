@@ -3,10 +3,16 @@
 /* eslint-disable no-undef */
 import { Report } from './report.model';
 import { Notification } from '../notification/notification.model';
+import StorageService from '../../services/storage.service';
 
 const createReportToDB = async (
   reporterId: string,
-  payload: { type: 'product' | 'seller'; targetId: string; reason: string }
+  payload: {
+    type: 'product' | 'seller';
+    targetId: string;
+    reason: string;
+    image?: string;
+  },
 ) => {
   const result = await Report.create({ reporterId, ...payload });
 
@@ -28,6 +34,14 @@ const createReportToDB = async (
   return result;
 };
 
+const deleteReportFromDB = async (id: string) => {
+  const res = await Report.findByIdAndDelete(id);
+  if (!res) throw new Error('Report not found');
+  if (res.image) {
+    await StorageService.deleteByUrl(res.image);
+  }
+};
+
 const getReportsFromDB = async (query: any = {}) => {
   const q: any = {};
   if (query.type) q.type = query.type;
@@ -36,4 +50,8 @@ const getReportsFromDB = async (query: any = {}) => {
   return reports;
 };
 
-export const ReportService = { createReportToDB, getReportsFromDB };
+export const ReportService = {
+  createReportToDB,
+  deleteReportFromDB,
+  getReportsFromDB,
+};

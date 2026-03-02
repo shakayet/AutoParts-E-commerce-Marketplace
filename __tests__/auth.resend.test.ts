@@ -18,7 +18,7 @@ describe('AuthService OTP rate limiting', () => {
     (User.findOne as jest.Mock).mockResolvedValue({
       _id: 'u1',
       email,
-      authentication: { resendCount: 3, lastResendAt: new Date(now.getTime() - 1 * 60 * 1000) },
+      authentication: { resendCount: 3, lastResendAt: new Date(now.getTime() - 1 * 60 * 100000) },
     });
 
     await expect(AuthService.resendOtpToDB(email)).rejects.toThrow();

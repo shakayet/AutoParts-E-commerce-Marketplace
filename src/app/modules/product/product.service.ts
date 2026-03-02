@@ -2,19 +2,52 @@
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
 import { Product } from './product.model';
+import StorageService from '../../services/storage.service';
 import { IProduct } from './product.interface';
 import QueryBuilder from '../../builder/QueryBuilder';
 
-type PaginatedResult<T> = { data: T[]; meta: { total: number; page: number; limit: number; totalPages: number } };
+type PaginatedResult<T> = {
+  data: T[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
 
-const createProductToDB = async (payload: Partial<IProduct>): Promise<IProduct> => {
+const createProductToDB = async (
+  payload: Partial<IProduct>,
+): Promise<IProduct> => {
   const product = await Product.create(payload as Partial<IProduct>);
-  if (!product) throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create product');
+  if (!product)
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create product');
   return product as unknown as IProduct;
 };
 
-const updateProductToDB = async (id: string, payload: Partial<IProduct>): Promise<IProduct> => {
-  const product = await Product.findByIdAndUpdate(id, payload as any, { new: true });
+const updateProductToDB = async (
+  id: string,
+  payload: Partial<IProduct>,
+): Promise<IProduct> => {
+  // if the payload contains new images we should clean up the old ones
+  const existing = await Product.findById(id);
+  if (!existing) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Product not found');
+  }
+
+  if (payload.mainImage && existing.mainImage) {
+    await StorageService.deleteByUrl(existing.mainImage);
+  }
+
+  if (payload.galleryImages && Array.isArray(payload.galleryImages)) {
+    const newGallery = payload.galleryImages as string[];
+    const oldGallery = existing.galleryImages || [];
+    // delete any old urls that are not present in the new set
+    for (const oldUrl of oldGallery) {
+      if (!newGallery.includes(oldUrl)) {
+        await StorageService.deleteByUrl(oldUrl);
+      }
+    }
+  }
+
+  const product = await Product.findByIdAndUpdate(id, payload as any, {
+    new: true,
+  });
   if (!product) throw new ApiError(StatusCodes.NOT_FOUND, 'Product not found');
   return product as unknown as IProduct;
 };
@@ -22,15 +55,30 @@ const updateProductToDB = async (id: string, payload: Partial<IProduct>): Promis
 const deleteProductFromDB = async (id: string): Promise<void> => {
   const res = await Product.findByIdAndDelete(id);
   if (!res) throw new ApiError(StatusCodes.NOT_FOUND, 'Product not found');
+
+  // clean up any images stored for this product
+  if (res.mainImage) {
+    await StorageService.deleteByUrl(res.mainImage);
+  }
+  if (res.galleryImages && Array.isArray(res.galleryImages)) {
+    for (const url of res.galleryImages) {
+      await StorageService.deleteByUrl(url);
+    }
+  }
 };
 
 const getProductByIdFromDB = async (id: string): Promise<IProduct> => {
-  const product = await Product.findById(id).populate('sellerId', 'name coordinates address whatsappNumber');
+  const product = await Product.findById(id).populate(
+    'sellerId',
+    'name coordinates address whatsappNumber',
+  );
   if (!product) throw new ApiError(StatusCodes.NOT_FOUND, 'Product not found');
   return product as unknown as IProduct;
 };
 
-const getProductsFromDB = async (filter: any = {}): Promise<PaginatedResult<IProduct>> => {
+const getProductsFromDB = async (
+  filter: any = {},
+): Promise<PaginatedResult<IProduct>> => {
   const q: any = { isBlocked: false };
   if (filter.category) q.category = filter.category;
   if (filter.brand) q.brand = filter.brand;
@@ -41,7 +89,10 @@ const getProductsFromDB = async (filter: any = {}): Promise<PaginatedResult<IPro
   const limit = Number(filter.limit || 20);
 
   const total = await Product.countDocuments(q);
-  const products = await Product.find(q).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
+  const products = await Product.find(q)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ createdAt: -1 });
 
   return {
     data: products as unknown as IProduct[],
@@ -57,19 +108,24 @@ const getProductsFromDB = async (filter: any = {}): Promise<PaginatedResult<IPro
 const getRelatedProducts = async (productId: string): Promise<IProduct[]> => {
   const prod = await Product.findById(productId);
   if (!prod) return [];
-  const related = await Product.find({ _id: { $ne: prod._id }, category: prod.category })
+  const related = await Product.find({
+    _id: { $ne: prod._id },
+    category: prod.category,
+  })
     .sort({ averageRating: -1 })
     .limit(4);
   return related as unknown as IProduct[];
 };
 
-const getAdvancedProductsFromDB = async (filter: any = {}): Promise<PaginatedResult<IProduct>> => {
+const getAdvancedProductsFromDB = async (
+  filter: any = {},
+): Promise<PaginatedResult<IProduct>> => {
   // Build base query
   const searchableFields = ['name', 'description', 'brand', 'category'];
-  
+
   const queryBuilder = new QueryBuilder(
     Product.find({ isBlocked: false }),
-    filter
+    filter,
   )
     .search(searchableFields)
     .filter()

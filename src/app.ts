@@ -15,8 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//file retrieve
-app.use(express.static('uploads'));
+// file retrieval is handled by CloudFront; we no longer serve from local uploads directory
 
 //router
 app.use('/api/v1', router);
@@ -27,7 +26,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send(
     `<h1 style="text-align:center; color:#173616; font-family:Verdana;">Beep-beep! The server is alive and kicking.</h1>
     <p style="text-align:center; color:#173616; font-family:Verdana;">${date}</p>
-    `
+    `,
   );
 });
 

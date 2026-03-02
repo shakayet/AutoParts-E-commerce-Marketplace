@@ -19,7 +19,7 @@ const createUser = catchAsync(
       message: 'User created successfully',
       data: result.user,
     });
-  }
+  },
 );
 
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
@@ -38,8 +38,10 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 const updateProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-  const files = req.files as Record<string, { filename: string }[] | undefined> | undefined;
-  let image = getSingleFilePath(files, 'image');
+    const files = req.files as
+      | Record<string, { filename: string }[] | undefined>
+      | undefined;
+    let image = getSingleFilePath(files, 'image');
 
     const data = {
       image,
@@ -53,7 +55,7 @@ const updateProfile = catchAsync(
       message: 'Profile updated successfully',
       data: result,
     });
-  }
+  },
 );
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
@@ -91,7 +93,7 @@ const changePassword = catchAsync(
       statusCode: StatusCodes.OK,
       message: 'Password changed successfully',
     });
-  }
+  },
 );
 
 const blockUnblockUser = catchAsync(async (req: Request, res: Response) => {
@@ -108,6 +110,17 @@ const blockUnblockUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  await UserService.deleteUserFromDB(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User deleted successfully',
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -116,4 +129,5 @@ export const UserController = {
   getUserById,
   changePassword,
   blockUnblockUser,
+  deleteUser,
 };

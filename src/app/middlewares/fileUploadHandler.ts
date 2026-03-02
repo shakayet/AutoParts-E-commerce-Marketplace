@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request } from 'express';
 import fs from 'fs';
 import { StatusCodes } from 'http-status-codes';
@@ -33,7 +35,7 @@ const fileUploadHandler = () => {
           break;
         case 'galleryImages':
           uploadDir = path.join(baseUploadDir, 'image');
-          break;    
+          break;
         case 'media':
           uploadDir = path.join(baseUploadDir, 'media');
           break;
@@ -60,11 +62,24 @@ const fileUploadHandler = () => {
     },
   });
 
-  type MulterFile = { fieldname: string; originalname: string; filename: string; mimetype: string };
+  type MulterFile = {
+    fieldname: string;
+    originalname: string;
+    filename: string;
+    mimetype: string;
+  };
 
   //file filter
-  const filterFilter = (req: Request, file: MulterFile, cb: FileFilterCallback) => {
-    if (file.fieldname === 'image' || file.fieldname === 'mainImage' || file.fieldname === 'galleryImages') {
+  const filterFilter = (
+    req: Request,
+    file: MulterFile,
+    cb: FileFilterCallback,
+  ) => {
+    if (
+      file.fieldname === 'image' ||
+      file.fieldname === 'mainImage' ||
+      file.fieldname === 'galleryImages'
+    ) {
       if (
         file.mimetype === 'image/jpeg' ||
         file.mimetype === 'image/png' ||
@@ -75,8 +90,8 @@ const fileUploadHandler = () => {
         cb(
           new ApiError(
             StatusCodes.BAD_REQUEST,
-            'Only .jpeg, .png, .jpg file supported'
-          )
+            'Only .jpeg, .png, .jpg file supported',
+          ),
         );
       }
     } else if (file.fieldname === 'media') {
@@ -86,8 +101,8 @@ const fileUploadHandler = () => {
         cb(
           new ApiError(
             StatusCodes.BAD_REQUEST,
-            'Only .mp4, .mp3, file supported'
-          )
+            'Only .mp4, .mp3, file supported',
+          ),
         );
       }
     } else if (file.fieldname === 'doc') {
@@ -111,7 +126,45 @@ const fileUploadHandler = () => {
     { name: 'media', maxCount: 3 },
     { name: 'doc', maxCount: 3 },
   ]);
-  return upload;
+
+  // wrap multer middleware in a function that will process files after
+  // they have been written to disk.  The processing step uploads every
+  // file to S3 (optimising images) and attaches a `url` field so that
+  // downstream handlers can remain unaware of the storage details.
+  const wrapped = (req: any, res: any, next: any) => {
+    upload(req, res, async (err: any) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (req.files) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const StorageService = require('../services/storage.service').default;
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        for (const field of Object.keys(files)) {
+          const arr = files[field];
+          if (!arr) continue;
+          for (const file of arr) {
+            try {
+              // multer.diskStorage attaches a `path` property
+              const localPath = (file as any).path;
+              if (localPath) {
+                const url = await StorageService.uploadLocalFile(localPath);
+                (file as any).url = url;
+              }
+            } catch (uploadErr) {
+              // if uploading fails we propagate the error
+              return next(uploadErr);
+            }
+          }
+        }
+      }
+
+      next();
+    });
+  };
+
+  return wrapped;
 };
 
 export default fileUploadHandler;

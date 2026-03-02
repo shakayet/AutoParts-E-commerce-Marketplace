@@ -8,6 +8,7 @@ This is a template project for backend development using Typescript, Node.js, Ex
 
 - **Authentication API:** Complete authentication system using JWT for secure token-based authentication and bcrypt for password hashing.
 - **File Upload:** Implemented using Multer with efficient file handling and short-term storage.
+- **Unified Image Pipeline:** All uploaded images are preprocessed (resized/compressed/converted) via a dedicated `StorageService` before being pushed to AWS S3, and CloudFront is used for delivery. Lifecycle management ensures that replaced or deleted assets are cleaned up from the bucket automatically.
 - **Data Validation:** Robust data validation using Zod and Mongoose schemas.
 - **Code Quality:** Ensured code readability and quality with ESLint and Prettier.
 - **Email Service:** Sending emails through NodeMailer.
@@ -114,4 +115,5 @@ Explain how to run the automated tests for this system.
 ```bash
 npm test
 ```
+
 # AUTOPASS E-COMMERCE

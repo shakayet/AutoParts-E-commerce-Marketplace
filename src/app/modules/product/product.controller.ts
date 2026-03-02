@@ -24,11 +24,13 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   const { mainImage: a, galleryImages: b } = (req as MulterRequest).files;
 
   const mainImage =
-    a && a.length > 0 ? `/${'image'}/${a[0].filename}` : undefined;
+    a && a.length > 0
+      ? (a[0] as any).url || `/${'image'}/${a[0].filename}`
+      : undefined;
 
   const galleryImages =
     b && b.length > 0
-      ? b.map((f: MulterFile) => `/${'image'}/${f.filename}`)
+      ? b.map((f: any) => f.url || `/${'image'}/${f.filename}`)
       : undefined;
 
   const body = req.body as Partial<IProduct>;
@@ -54,13 +56,15 @@ const updateProduct = catchAsync(async (req: Request, res: Response) => {
   const files = req.files as
     | Record<string, MulterFile[] | undefined>
     | undefined;
-  const images = files?.image ?? [];
+  const images = (files?.image ?? []) as any[];
 
   const mainImage =
-    images.length > 0 ? `/${'image'}/${images[0].filename}` : undefined;
+    images.length > 0
+      ? images[0].url || `/${'image'}/${images[0].filename}`
+      : undefined;
   const galleryImages =
     images.length > 1
-      ? images.slice(1, 6).map((f: MulterFile) => `/${'image'}/${f.filename}`)
+      ? images.slice(1, 6).map((f: any) => f.url || `/${'image'}/${f.filename}`)
       : undefined;
 
   const body = req.body as Partial<IProduct>;
@@ -109,22 +113,24 @@ const getProductById = catchAsync(async (req: Request, res: Response) => {
   let sellerRating = 0;
   if (allProducts.length > 0) {
     const totalRatingsSum = allProducts.reduce(
-      (sum, product) => sum + (product.averageRating || 0) * (product.totalRatings || 0),
-      0
+      (sum, product) =>
+        sum + (product.averageRating || 0) * (product.totalRatings || 0),
+      0,
     );
 
     const totalRatingsCount = allProducts.reduce(
       (sum, product) => sum + (product.totalRatings || 0),
-      0
+      0,
     );
 
-    sellerRating = totalRatingsCount > 0 ? totalRatingsSum / totalRatingsCount : 0;
+    sellerRating =
+      totalRatingsCount > 0 ? totalRatingsSum / totalRatingsCount : 0;
   }
 
   // Add sellerRating to the response without saving to DB
   const responseData = {
     ...(result as any).toObject(),
-    sellerRating: Number(sellerRating.toFixed(2))
+    sellerRating: Number(sellerRating.toFixed(2)),
   };
 
   sendResponse(res, {

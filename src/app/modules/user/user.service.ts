@@ -4,13 +4,14 @@ import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { emailHelper } from '../../../helpers/emailHelper';
 import { emailTemplate } from '../../../shared/emailTemplate';
-import unlinkFile from '../../../shared/unlinkFile';
+// storage helper (handles S3 upload/delete)
+import StorageService from '../../services/storage.service';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
 
 const createUserToDB = async (
-  payload: Partial<IUser>
+  payload: Partial<IUser>,
 ): Promise<{ user: IUser; otp: number }> => {
   //set role
   payload.role = USER_ROLES.USER;
@@ -36,14 +37,14 @@ const createUserToDB = async (
   };
   await User.findOneAndUpdate(
     { _id: createUser._id },
-    { $set: { authentication } }
+    { $set: { authentication } },
   );
 
   return { user: createUser as IUser, otp };
 };
 
 const getUserProfileFromDB = async (
-  user: JwtPayload
+  user: JwtPayload,
 ): Promise<Partial<IUser>> => {
   const { id } = user;
   const isExistUser = await User.isExistUserById(id);
@@ -56,7 +57,7 @@ const getUserProfileFromDB = async (
 
 const updateProfileToDB = async (
   user: JwtPayload,
-  payload: Partial<IUser>
+  payload: Partial<IUser>,
 ): Promise<Partial<IUser | null>> => {
   const { id } = user;
   const isExistUser = await User.isExistUserById(id);
@@ -64,9 +65,9 @@ const updateProfileToDB = async (
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
-  //unlink file here
+  // remove previous image from storage if a new one is provided
   if (payload.image && isExistUser.image) {
-    unlinkFile(isExistUser.image as string);
+    await StorageService.deleteByUrl(isExistUser.image as string);
   }
 
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
@@ -81,10 +82,12 @@ const getAllUsersFromDB = async (): Promise<Partial<IUser[]>> => {
   return users;
 };
 
-const getUserByIdFromDB = async (id: string): Promise<Partial<IUser | null>> => {
+const getUserByIdFromDB = async (
+  id: string,
+): Promise<Partial<IUser | null>> => {
   const user = await User.findById(id);
   if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
   }
   return user;
 };
@@ -92,7 +95,7 @@ const getUserByIdFromDB = async (id: string): Promise<Partial<IUser | null>> => 
 const changePasswordToDB = async (
   user: JwtPayload,
   oldPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> => {
   const { id } = user;
   const isExistUser = await User.isExistUserById(id);
@@ -111,15 +114,29 @@ const changePasswordToDB = async (
 
 const blockUnblockUserToDB = async (
   userId: string,
-  block: boolean
+  block: boolean,
 ): Promise<Partial<IUser | null>> => {
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
   }
 
-  const updated = await User.findByIdAndUpdate(userId, { isBlocked: block }, { new: true });
+  const updated = await User.findByIdAndUpdate(
+    userId,
+    { isBlocked: block },
+    { new: true },
+  );
   return updated;
+};
+
+const deleteUserFromDB = async (userId: string): Promise<void> => {
+  const res = await User.findByIdAndDelete(userId);
+  if (!res) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  if (res.image) {
+    await StorageService.deleteByUrl(res.image as string);
+  }
 };
 
 export const UserService = {
@@ -130,4 +147,5 @@ export const UserService = {
   getUserByIdFromDB,
   changePasswordToDB,
   blockUnblockUserToDB,
+  deleteUserFromDB,
 };
