@@ -13,6 +13,9 @@ export default {
   jwt: {
     jwt_secret: process.env.JWT_SECRET,
     jwt_expire_in: process.env.JWT_EXPIRE_IN,
+    refresh_secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+    refresh_expire_in:
+      process.env.JWT_REFRESH_EXPIRE_IN || process.env.JWT_EXPIRE_IN,
   },
   email: {
     from: process.env.EMAIL_FROM,

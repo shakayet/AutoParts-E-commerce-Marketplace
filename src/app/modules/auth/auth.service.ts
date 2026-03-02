@@ -11,6 +11,7 @@ import {
   IAuthResetPassword,
   IChangePassword,
   ILoginData,
+  IRefreshTokenRequest,
   IVerifyEmail,
 } from '../../../types/auth';
 import cryptoToken from '../../../util/cryptoToken';
@@ -20,7 +21,14 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { VerificationToken } from '../verificationToken/verificationToken.model';
 
-//login
+const createRefreshToken = (userId: string) => {
+  return jwtHelper.createToken(
+    { id: userId },
+    config.jwt.refresh_secret as Secret,
+    config.jwt.refresh_expire_in as string,
+  );
+};
+
 const loginUserFromDB = async (payload: ILoginData) => {
   const { email, password } = payload;
   const isExistUser = await User.findOne({ email }).select('+password');
@@ -32,7 +40,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
   if (!isExistUser.verified) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'Please verify your account, then try to login again'
+      'Please verify your account, then try to login again',
     );
   }
 
@@ -40,7 +48,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
   if (isExistUser.status === 'delete') {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'You don’t have permission to access this content.It looks like your account has been deactivated.'
+      'You don’t have permission to access this content.It looks like your account has been deactivated.',
     );
   }
 
@@ -52,14 +60,14 @@ const loginUserFromDB = async (payload: ILoginData) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
   }
 
-  //create token
   const createToken = jwtHelper.createToken(
     { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string
+    config.jwt.jwt_expire_in as string,
   );
+  const refreshToken = createRefreshToken(String(isExistUser._id));
 
-  return { createToken };
+  return { createToken, refreshToken };
 };
 
 //forget password
@@ -97,12 +105,15 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
   if (!oneTimeCode) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'Please give the otp, check your email we send a code'
+      'Please give the otp, check your email we send a code',
     );
   }
 
   // Try verification token first (separate collection)
-  const verificationRecord = await VerificationToken.findOne({ user: isExistUser._id, otp: oneTimeCode });
+  const verificationRecord = await VerificationToken.findOne({
+    user: isExistUser._id,
+    otp: oneTimeCode,
+  });
 
   const MAX_VERIFY_ATTEMPTS = 5;
 
@@ -110,15 +121,22 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
     // fallback to user.authentication
     if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
       // increment attempts on any existing verification token for the user
-      const anyToken = await VerificationToken.findOne({ user: isExistUser._id });
+      const anyToken = await VerificationToken.findOne({
+        user: isExistUser._id,
+      });
       if (anyToken) {
         anyToken.attempts = (anyToken.attempts || 0) + 1;
         await anyToken.save();
         if (anyToken.attempts >= MAX_VERIFY_ATTEMPTS) {
           // remove tokens and clear authentication
           await VerificationToken.deleteMany({ user: isExistUser._id });
-          await User.findByIdAndUpdate(isExistUser._id, { $set: { authentication: { oneTimeCode: null, expireAt: null } } });
-          throw new ApiError(StatusCodes.TOO_MANY_REQUESTS, 'Too many verification attempts. Please request a new OTP.');
+          await User.findByIdAndUpdate(isExistUser._id, {
+            $set: { authentication: { oneTimeCode: null, expireAt: null } },
+          });
+          throw new ApiError(
+            StatusCodes.TOO_MANY_REQUESTS,
+            'Too many verification attempts. Please request a new OTP.',
+          );
         }
       }
       throw new ApiError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
@@ -126,11 +144,13 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
   }
 
   const date = new Date();
-  const expireAt = verificationRecord ? verificationRecord.expireAt : isExistUser.authentication?.expireAt;
+  const expireAt = verificationRecord
+    ? verificationRecord.expireAt
+    : isExistUser.authentication?.expireAt;
   if (!expireAt || date > expireAt) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'Otp already expired, Please try again'
+      'Otp already expired, Please try again',
     );
   }
 
@@ -140,7 +160,7 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
   if (!isExistUser.verified) {
     await User.findOneAndUpdate(
       { _id: isExistUser._id },
-      { verified: true, authentication: { oneTimeCode: null, expireAt: null } }
+      { verified: true, authentication: { oneTimeCode: null, expireAt: null } },
     );
     // remove verification token(s)
     await VerificationToken.deleteMany({ user: isExistUser._id });
@@ -154,7 +174,7 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
           oneTimeCode: null,
           expireAt: null,
         },
-      }
+      },
     );
 
     //create token ;
@@ -176,7 +196,7 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
 //forget password
 const resetPasswordToDB = async (
   token: string,
-  payload: IAuthResetPassword
+  payload: IAuthResetPassword,
 ) => {
   const { newPassword, confirmPassword } = payload;
   if (!token) {
@@ -191,12 +211,12 @@ const resetPasswordToDB = async (
 
   //user permission check
   const isExistUser = await User.findById(isExistToken.user).select(
-    '+authentication'
+    '+authentication',
   );
   if (!isExistUser?.authentication?.isResetPassword) {
     throw new ApiError(
       StatusCodes.UNAUTHORIZED,
-      "You don't have permission to change the password. Please click again to 'Forgot Password'"
+      "You don't have permission to change the password. Please click again to 'Forgot Password'",
     );
   }
 
@@ -205,7 +225,7 @@ const resetPasswordToDB = async (
   if (!isValid) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'Token expired, Please click again to the forget password'
+      'Token expired, Please click again to the forget password',
     );
   }
 
@@ -213,13 +233,13 @@ const resetPasswordToDB = async (
   if (newPassword !== confirmPassword) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      "New password and Confirm password doesn't match!"
+      "New password and Confirm password doesn't match!",
     );
   }
 
   const hashPassword = await bcrypt.hash(
     newPassword,
-    Number(config.bcrypt_salt_rounds)
+    Number(config.bcrypt_salt_rounds),
   );
 
   const updateData = {
@@ -238,7 +258,7 @@ const resetPasswordToDB = async (
 
 const changePasswordToDB = async (
   user: JwtPayload,
-  payload: IChangePassword
+  payload: IChangePassword,
 ) => {
   const { currentPassword, newPassword, confirmPassword } = payload;
   const isExistUser = await User.findById(user.id).select('+password');
@@ -258,21 +278,21 @@ const changePasswordToDB = async (
   if (currentPassword === newPassword) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'Please give different password from current password'
+      'Please give different password from current password',
     );
   }
   //new password and confirm password check
   if (newPassword !== confirmPassword) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      "Password and Confirm password doesn't matched"
+      "Password and Confirm password doesn't matched",
     );
   }
 
   //hash password
   const hashPassword = await bcrypt.hash(
     newPassword,
-    Number(config.bcrypt_salt_rounds)
+    Number(config.bcrypt_salt_rounds),
   );
 
   const updateData = {
@@ -281,6 +301,57 @@ const changePasswordToDB = async (
   await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
+const refreshTokenToDB = async (payload: IRefreshTokenRequest) => {
+  const { refreshToken } = payload;
+  if (!refreshToken) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Refresh token is required');
+  }
+
+  let decoded: JwtPayload;
+  try {
+    decoded = jwtHelper.verifyToken(
+      refreshToken,
+      config.jwt.refresh_secret as Secret,
+    );
+  } catch {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid refresh token');
+  }
+
+  const userId = decoded.id as string;
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found');
+  }
+
+  if (user.status === 'delete') {
+    throw new ApiError(
+      StatusCodes.UNAUTHORIZED,
+      'Account is deactivated. Please contact support',
+    );
+  }
+
+  const createToken = jwtHelper.createToken(
+    { id: user._id, role: user.role, email: user.email },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.jwt_expire_in as string,
+  );
+  const newRefreshToken = createRefreshToken(String(user._id));
+
+  return { createToken, refreshToken: newRefreshToken };
+};
+
+const logoutFromDB = async (payload: IRefreshTokenRequest) => {
+  const { refreshToken } = payload;
+  if (!refreshToken) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Refresh token is required');
+  }
+
+  try {
+    jwtHelper.verifyToken(refreshToken, config.jwt.refresh_secret as Secret);
+  } catch {
+    // if token is invalid/expired, treat as already logged out
+  }
+};
 
 // resend otp
 const resendOtpToDB = async (email: string) => {
@@ -292,10 +363,18 @@ const resendOtpToDB = async (email: string) => {
   const MAX_RESENDS = 3;
   const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
   const now = new Date();
-  const auth = isExistUser.authentication || { resendCount: 0, lastResendAt: null } as any;
-  if (auth.lastResendAt && now.getTime() - new Date(auth.lastResendAt).getTime() < WINDOW_MS) {
+  const auth =
+    isExistUser.authentication ||
+    ({ resendCount: 0, lastResendAt: null } as any);
+  if (
+    auth.lastResendAt &&
+    now.getTime() - new Date(auth.lastResendAt).getTime() < WINDOW_MS
+  ) {
     if ((auth.resendCount || 0) >= MAX_RESENDS) {
-      throw new ApiError(StatusCodes.TOO_MANY_REQUESTS, 'Too many OTP requests. Please try again later');
+      throw new ApiError(
+        StatusCodes.TOO_MANY_REQUESTS,
+        'Too many OTP requests. Please try again later',
+      );
     }
   } else {
     // reset window
@@ -319,7 +398,10 @@ const resendOtpToDB = async (email: string) => {
   auth.lastResendAt = now;
   auth.resendCount = (auth.resendCount || 0) + 1;
 
-  await User.findOneAndUpdate({ _id: isExistUser._id }, { $set: { authentication: auth } });
+  await User.findOneAndUpdate(
+    { _id: isExistUser._id },
+    { $set: { authentication: auth } },
+  );
 
   // create verification token record
   await VerificationToken.create({
@@ -356,4 +438,6 @@ export const AuthService = {
   changePasswordToDB,
   resendOtpToDB,
   registerUserFromDB,
+  refreshTokenToDB,
+  logoutFromDB,
 };

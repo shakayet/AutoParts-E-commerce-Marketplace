@@ -14,6 +14,18 @@ router.post(
 );
 
 router.post(
+  '/refresh-token',
+  validateRequest(AuthValidation.createRefreshTokenZodSchema),
+  AuthController.refreshToken
+);
+
+router.post(
+  '/logout',
+  validateRequest(AuthValidation.createRefreshTokenZodSchema),
+  AuthController.logout
+);
+
+router.post(
   '/register',
   validateRequest(UserValidation.createUserZodSchema),
   AuthController.registerUser

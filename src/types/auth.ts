@@ -8,6 +8,10 @@ export type ILoginData = {
   password: string;
 };
 
+export type IRefreshTokenRequest = {
+  refreshToken: string;
+};
+
 export type IAuthResetPassword = {
   newPassword: string;
   confirmPassword: string;

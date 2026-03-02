@@ -37,7 +37,10 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'User logged in successfully.',
-    data: result.createToken,
+    data: {
+      accessToken: result.createToken,
+      refreshToken: result.refreshToken,
+    },
   });
 });
 
@@ -60,7 +63,8 @@ const resendOtp = async (req: Request, res: Response) => {
     const result = await AuthService.resendOtpToDB(email);
     res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'An error occurred';
+    const message =
+      error instanceof Error ? error.message : 'An error occurred';
     res.status(400).json({ success: false, message });
   }
 };
@@ -68,7 +72,8 @@ const resendOtp = async (req: Request, res: Response) => {
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization as string | undefined;
   let token: string | undefined = authHeader;
-  if (authHeader && authHeader.startsWith('Bearer ')) token = authHeader.split(' ')[1];
+  if (authHeader && authHeader.startsWith('Bearer '))
+    token = authHeader.split(' ')[1];
   const { ...resetData } = req.body;
   const result = await AuthService.resetPasswordToDB(token!, resetData);
 
@@ -92,6 +97,29 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { ...tokenData } = req.body;
+  const result = await AuthService.refreshTokenToDB(tokenData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Token refreshed successfully.',
+    data: result,
+  });
+});
+
+const logout = catchAsync(async (req: Request, res: Response) => {
+  const { ...tokenData } = req.body;
+  await AuthService.logoutFromDB(tokenData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User logged out successfully.',
+  });
+});
+
 export const AuthController = {
   verifyEmail,
   loginUser,
@@ -100,4 +128,6 @@ export const AuthController = {
   changePassword,
   resendOtp,
   registerUser,
+  refreshToken,
+  logout,
 };
