@@ -50,8 +50,20 @@ const getReportsFromDB = async (query: any = {}) => {
   return reports;
 };
 
+const updateReportStatusToDB = async (
+  id: string,
+  status: 'pending' | 'reviewed' | 'dismissed',
+) => {
+  const report = await Report.findById(id);
+  if (!report) throw new Error('Report not found');
+  report.status = status;
+  await report.save();
+  return report;
+};
+
 export const ReportService = {
   createReportToDB,
   deleteReportFromDB,
   getReportsFromDB,
+  updateReportStatusToDB,
 };

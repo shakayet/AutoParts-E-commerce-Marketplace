@@ -51,4 +51,17 @@ const getReports = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const ReportController = { createReport, getReports };
+const updateReportStatus = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const result = await ReportService.updateReportStatusToDB(id, status);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Report status updated successfully',
+    data: result,
+  });
+});
+
+export const ReportController = { createReport, getReports, updateReportStatus };

@@ -29,4 +29,12 @@ router
     ReportController.getReports
   );
 
+router
+  .route('/:id')
+  .patch(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    validateRequest(ReportValidation.updateReportStatusZodSchema),
+    ReportController.updateReportStatus
+  );
+
 export const ReportRoutes = router;

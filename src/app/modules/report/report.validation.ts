@@ -14,4 +14,14 @@ const getReportsZodSchema = z.object({
   }),
 });
 
-export const ReportValidation = { createReportZodSchema, getReportsZodSchema };
+const updateReportStatusZodSchema = z.object({
+  body: z.object({
+    status: z.enum(['pending', 'reviewed', 'dismissed']),
+  }),
+});
+
+export const ReportValidation = {
+  createReportZodSchema,
+  getReportsZodSchema,
+  updateReportStatusZodSchema,
+};
