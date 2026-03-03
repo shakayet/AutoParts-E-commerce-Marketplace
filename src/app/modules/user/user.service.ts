@@ -1,14 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { emailHelper } from '../../../helpers/emailHelper';
 import { emailTemplate } from '../../../shared/emailTemplate';
-// storage helper (handles S3 upload/delete)
 import StorageService from '../../services/storage.service';
 import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
+import QueryBuilder from '../../builder/QueryBuilder';
+
+type PaginatedResult<T> = {
+  data: T[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
 
 const createUserToDB = async (
   payload: Partial<IUser>,
@@ -77,9 +83,32 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
-const getAllUsersFromDB = async (): Promise<Partial<IUser[]>> => {
-  const users = await User.find({});
-  return users;
+const getAllUsersFromDB = async (
+  filter: any = {},
+): Promise<PaginatedResult<Partial<IUser>>> => {
+  const searchableFields = ['name', 'email', 'role', 'whatsappNumber'];
+
+  const queryBuilder = new QueryBuilder(User.find({}), filter)
+    .search(searchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const [users, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: users as Partial<IUser>[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
 };
 
 const getUserByIdFromDB = async (

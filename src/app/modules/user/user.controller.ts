@@ -59,13 +59,20 @@ const updateProfile = catchAsync(
 );
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.getAllUsersFromDB();
+  const filters = req.query;
+  const result = await UserService.getAllUsersFromDB(filters);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Users retrieved successfully',
-    data: result,
+    data: result.data,
+    pagination: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPages,
+      total: result.meta.total,
+    },
   });
 });
 
