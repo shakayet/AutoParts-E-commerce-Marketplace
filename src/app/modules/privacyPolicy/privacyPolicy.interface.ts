@@ -1,6 +1,6 @@
 export type IPrivacyPolicy = {
   title: string;
-  description: string;
+  content: string;
   isActive?: boolean;
 };
 

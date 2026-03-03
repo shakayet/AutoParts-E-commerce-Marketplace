@@ -3,7 +3,7 @@ import { z } from 'zod';
 const createPrivacyPolicyZodSchema = z.object({
   body: z.object({
     title: z.string({ required_error: 'Title is required' }),
-    description: z.string({ required_error: 'Description is required' }),
+    content: z.string({ required_error: 'Content is required' }),
     isActive: z.boolean().optional(),
   }),
 });
@@ -11,7 +11,7 @@ const createPrivacyPolicyZodSchema = z.object({
 const updatePrivacyPolicyZodSchema = z.object({
   body: z.object({
     title: z.string().optional(),
-    description: z.string().optional(),
+    content: z.string().optional(),
     isActive: z.boolean().optional(),
   }),
 });

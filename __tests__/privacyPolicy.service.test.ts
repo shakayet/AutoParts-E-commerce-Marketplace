@@ -8,7 +8,7 @@ describe('PrivacyPolicyService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('createPrivacyPolicyToDB calls PrivacyPolicy.create', async () => {
-    const payload = { description: 'P' };
+    const payload = { content: 'P' };
     (PrivacyPolicy.create as jest.Mock).mockResolvedValue({
       _id: 'p1',
       ...payload,

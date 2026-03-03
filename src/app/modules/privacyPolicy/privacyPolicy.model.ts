@@ -5,7 +5,7 @@ import { IPrivacyPolicy } from './privacyPolicy.interface';
 const privacyPolicySchema = new Schema<IPrivacyPolicy>(
   {
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    content: { type: String, required: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
