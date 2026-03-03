@@ -23,7 +23,10 @@ router
         };
       }
 
-      const imagePath = getSingleFilePath((req as any).files, 'image');
+      let imagePath = getSingleFilePath((req as any).files, 'image');
+      if (!imagePath) {
+        imagePath = getSingleFilePath((req as any).files, 'icon');
+      }
       if (imagePath) {
         req.body.image = imagePath;
         req.body.icon = imagePath;

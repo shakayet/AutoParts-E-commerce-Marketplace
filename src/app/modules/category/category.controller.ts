@@ -7,11 +7,17 @@ import { StatusCodes } from 'http-status-codes';
 import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
-  const image = getSingleFilePath((req as any).files, 'image');
+  let image = getSingleFilePath((req as any).files, 'image');
+  if (!image) {
+    image = getSingleFilePath((req as any).files, 'icon');
+  }
 
-  const payload = {
+  const payload: any = {
     ...req.body,
-    image,
+    // only override if we actually found an image file; avoid wiping
+    // an existing value that might have been set by upstream middleware
+    ...(image ? { image } : {}),
+    ...(image ? { icon: image } : {}),
   };
 
   const result = await CategoryService.createCategoryToDB(payload);
@@ -26,7 +32,10 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const image = getSingleFilePath((req as any).files, 'image');
+  let image = getSingleFilePath((req as any).files, 'image');
+  if (!image) {
+    image = getSingleFilePath((req as any).files, 'icon');
+  }
   const payload = {
     ...req.body,
     ...(image ? { image } : {}),
@@ -86,7 +95,7 @@ const createCategoryRequest = catchAsync(
 
     const result = await CategoryService.createCategoryRequestToDB(
       userId,
-      payload
+      payload,
     );
 
     sendResponse(res, {
@@ -95,7 +104,7 @@ const createCategoryRequest = catchAsync(
       message: 'Category request submitted',
       data: result,
     });
-  }
+  },
 );
 
 const getCategoryRequests = catchAsync(async (req: Request, res: Response) => {
@@ -115,7 +124,7 @@ const reviewCategoryRequest = catchAsync(
     const result = await CategoryService.reviewCategoryRequestToDB(
       id,
       status,
-      adminComment
+      adminComment,
     );
     sendResponse(res, {
       success: true,
@@ -123,7 +132,7 @@ const reviewCategoryRequest = catchAsync(
       message: 'Category request reviewed',
       data: result,
     });
-  }
+  },
 );
 
 export const CategoryController = {

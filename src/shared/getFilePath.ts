@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type IFolderName = 'image' | 'media' | 'doc';
+type IFolderName = 'image' | 'icon' | 'media' | 'doc';
 
 //single file
 type MulterFile = { filename: string };

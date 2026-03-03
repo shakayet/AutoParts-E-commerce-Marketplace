@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
@@ -9,6 +11,19 @@ import { ICategoryRequest } from './categoryRequest.interface';
 import { Notification } from '../notification/notification.model';
 
 const createCategoryToDB = async (payload: Partial<ICategory>) => {
+  // if an image path from local uploads is provided, upload it to S3 first
+  if (payload.image && typeof payload.image === 'string') {
+    const img = payload.image as string;
+    if (img.startsWith('/image/') || img.startsWith('/media/') || img.startsWith('/doc/')) {
+      const localPath = require('path').join(process.cwd(), 'uploads', img.replace(/^\//, ''));
+      const url = await StorageService.uploadLocalFile(localPath);
+      payload.image = url;
+      if (!payload.icon) {
+        payload.icon = url;
+      }
+    }
+  }
+
   const exists = await Category.findOne({ name: payload.name });
   if (exists)
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Category already exists');
@@ -20,6 +35,20 @@ const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
   const existing = await Category.findById(id);
   if (!existing)
     throw new ApiError(StatusCodes.NOT_FOUND, 'Category not found');
+
+  // if incoming payload includes a new image, upload it to S3 (if it's a local path)
+  if (payload.image && typeof payload.image === 'string') {
+    const img = payload.image as string;
+    if (img.startsWith('/image/') || img.startsWith('/media/') || img.startsWith('/doc/')) {
+      const localPath = require('path').join(process.cwd(), 'uploads', img.replace(/^\//, ''));
+      const url = await StorageService.uploadLocalFile(localPath);
+      payload.image = url;
+      // keep icon in sync if caller provided same file
+      if (!payload.icon) {
+        payload.icon = url;
+      }
+    }
+  }
 
   if (payload.image && existing.image) {
     await StorageService.deleteByUrl(existing.image as string);

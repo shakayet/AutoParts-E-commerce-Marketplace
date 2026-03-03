@@ -9,10 +9,18 @@ describe('CategoryController', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('createCategoryRequest calls service and returns result', async () => {
-    const mockReq: any = { user: { id: 'u1' }, body: { name: 'New', description: 'd' } };
-    const mockRes: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const mockReq: any = {
+      user: { id: 'u1' },
+      body: { name: 'New', description: 'd' },
+    };
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
-    (CategoryService.createCategoryRequestToDB as jest.Mock).mockResolvedValue({ _id: 'cr1' });
+    (CategoryService.createCategoryRequestToDB as jest.Mock).mockResolvedValue({
+      _id: 'cr1',
+    });
 
     await CategoryController.createCategoryRequest(mockReq, mockRes, jest.fn());
 
@@ -21,14 +29,50 @@ describe('CategoryController', () => {
   });
 
   it('reviewCategoryRequest calls service and returns result', async () => {
-    const mockReq: any = { params: { id: 'cr1' }, body: { status: 'approved', adminComment: 'ok' } };
-    const mockRes: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const mockReq: any = {
+      params: { id: 'cr1' },
+      body: { status: 'approved', adminComment: 'ok' },
+    };
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
-    (CategoryService.reviewCategoryRequestToDB as jest.Mock).mockResolvedValue({ _id: 'cr1' });
+    (CategoryService.reviewCategoryRequestToDB as jest.Mock).mockResolvedValue({
+      _id: 'cr1',
+    });
 
     await CategoryController.reviewCategoryRequest(mockReq, mockRes, jest.fn());
 
-    expect(CategoryService.reviewCategoryRequestToDB).toHaveBeenCalledWith('cr1', 'approved', 'ok');
+    expect(CategoryService.reviewCategoryRequestToDB).toHaveBeenCalledWith(
+      'cr1',
+      'approved',
+      'ok',
+    );
+    expect(mockRes.status).toHaveBeenCalled();
+  });
+
+  it('createCategory does not remove existing image when files are missing', async () => {
+    const mockReq: any = {
+      body: { name: 'cat1', image: '/image/foo.png' },
+      files: undefined,
+    };
+    const mockRes: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    (CategoryService.createCategoryToDB as jest.Mock).mockResolvedValue({
+      _id: 'c1',
+      name: 'cat1',
+      image: '/image/foo.png',
+    });
+
+    await CategoryController.createCategory(mockReq, mockRes, jest.fn());
+
+    expect(CategoryService.createCategoryToDB).toHaveBeenCalledWith(
+      expect.objectContaining({ image: '/image/foo.png' }),
+    );
     expect(mockRes.status).toHaveBeenCalled();
   });
 });

@@ -13,9 +13,15 @@ describe('CategoryService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('createCategoryRequestToDB creates a request', async () => {
-    (CategoryRequest.create as jest.Mock).mockResolvedValue({ _id: 'cr1', name: 'New Cat' });
+    (CategoryRequest.create as jest.Mock).mockResolvedValue({
+      _id: 'cr1',
+      name: 'New Cat',
+    });
 
-    const res = await CategoryService.createCategoryRequestToDB('user1', { name: 'New Cat', description: 'desc' });
+    const res = await CategoryService.createCategoryRequestToDB('user1', {
+      name: 'New Cat',
+      description: 'desc',
+    });
     expect(CategoryRequest.create).toHaveBeenCalled();
     expect(res).toEqual(expect.objectContaining({ _id: 'cr1' }));
   });
@@ -29,17 +35,33 @@ describe('CategoryService', () => {
       save: jest.fn().mockResolvedValue(true),
     };
 
-  // mock findById(...).populate(...) chain
-  (CategoryRequest.findById as jest.Mock).mockReturnValue({ populate: jest.fn().mockResolvedValue(reqDoc) });
+    // mock findById(...).populate(...) chain
+    (CategoryRequest.findById as jest.Mock).mockReturnValue({
+      populate: jest.fn().mockResolvedValue(reqDoc),
+    });
     (Category.findOne as jest.Mock).mockResolvedValue(null);
     (Category.create as jest.Mock).mockResolvedValue({ _id: 'c1' });
     (Notification.create as jest.Mock).mockResolvedValue({ _id: 'n1' });
 
-  const res = await CategoryService.reviewCategoryRequestToDB('cr1', 'approved', 'ok');
+    const res = await CategoryService.reviewCategoryRequestToDB(
+      'cr1',
+      'approved',
+      'ok',
+    );
 
     expect(CategoryRequest.findById).toHaveBeenCalledWith('cr1');
     expect(Category.create).toHaveBeenCalled();
     expect(Notification.create).toHaveBeenCalled();
     expect(res).toEqual(reqDoc);
+  });
+
+  it('createCategoryToDB calls Category.create with image field', async () => {
+    const payload = { name: 'cat1', image: '/image/foo.png' };
+    (Category.findOne as jest.Mock).mockResolvedValue(null);
+    (Category.create as jest.Mock).mockResolvedValue({ _id: 'c1', ...payload });
+
+    const res = await CategoryService.createCategoryToDB(payload as any);
+    expect(Category.create).toHaveBeenCalledWith(payload);
+    expect(res).toEqual(expect.objectContaining({ _id: 'c1' }));
   });
 });
