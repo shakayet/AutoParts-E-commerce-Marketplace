@@ -47,7 +47,7 @@ router
     UserController.getUserById,
   )
   .delete(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER,USER_ROLES.SUPER_ADMIN),
     UserController.deleteUser,
   );
 
