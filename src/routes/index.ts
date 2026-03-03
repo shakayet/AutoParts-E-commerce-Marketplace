@@ -8,6 +8,7 @@ import { ReportRoutes } from '../app/modules/report/report.route';
 import { CategoryRoutes } from '../app/modules/category/category.route';
 import { FAQRoutes } from '../app/modules/faq/faq.route';
 import { TermsRoutes } from '../app/modules/terms/terms.route';
+import { PrivacyPolicyRoutes } from '../app/modules/privacyPolicy/privacyPolicy.route';
 import { SellerRoutes } from '../app/modules/seller/seller.route';
 import { WishlistRoutes } from '../app/modules/wishList/wishlist.route';
 const router = express.Router();
@@ -50,13 +51,17 @@ const apiRoutes = [
     route: TermsRoutes,
   },
   {
+    path: '/privacy-policy',
+    route: PrivacyPolicyRoutes,
+  },
+  {
     path: '/seller',
     route: SellerRoutes,
   },
   {
     path: '/wishlist',
     route: WishlistRoutes,
-  }
+  },
 ];
 
 apiRoutes.forEach(route => router.use(route.path, route.route));
