@@ -1,5 +1,9 @@
 import config from '../config';
-import { ICreateAccount, IResetPassword } from '../types/emailTamplate';
+import {
+  ICreateAccount,
+  IReportStatusEmail,
+  IResetPassword,
+} from '../types/emailTamplate';
 
 const getProjectName = () => config.branding.projectName;
 
@@ -202,7 +206,65 @@ const resetPassword = (values: IResetPassword) => {
   return data;
 };
 
+const reportStatusUpdate = (values: IReportStatusEmail) => {
+  const projectName = getProjectName();
+
+  const decisionLabel =
+    values.decision === 'resolved' ? 'Report Resolved' : 'Report Dismissed';
+
+  const bodyContent = `
+    <p style="margin: 0 0 10px; color: #d1d5db;">
+      We are writing to inform you about the outcome of a report related to your activity on ${projectName}.
+    </p>
+    <p style="margin: 8px 0; color: #d1d5db;">
+      Status: <strong style="color: #f9fafb;">${decisionLabel}</strong>
+    </p>
+    <p style="margin: 8px 0; color: #d1d5db;">
+      Explanation from our team:
+    </p>
+    <p style="margin: 8px 0 16px; color: #9ca3af;">
+      ${values.explanation}
+    </p>
+    ${
+      values.productName || values.productId
+        ? `
+    <div style="margin: 16px 0; padding: 12px 16px; border-radius: 8px; background-color: #020617; text-align: left;">
+      <p style="margin: 0 0 6px; color: #e5e7eb; font-weight: 600;">Reported product details</p>
+      ${
+        values.productName
+          ? `<p style="margin: 0 0 4px; color: #d1d5db;">Name: ${values.productName}</p>`
+          : ''
+      }
+      ${
+        values.productId
+          ? `<p style="margin: 0 0 4px; color: #9ca3af;">ID: ${values.productId}</p>`
+          : ''
+      }
+      ${
+        values.productDetails
+          ? `<p style="margin: 0; color: #9ca3af;">${values.productDetails}</p>`
+          : ''
+      }
+    </div>
+    `
+        : ''
+    }
+    <p style="margin: 16px 0 0; color: #6b7280;">
+      If you have any questions about this decision, you can contact our support team from your dashboard.
+    </p>
+  `;
+
+  const data = {
+    to: values.email,
+    subject: `${projectName} report status update`,
+    html: baseTemplate('Report status update', bodyContent),
+  };
+
+  return data;
+};
+
 export const emailTemplate = {
   createAccount,
   resetPassword,
+  reportStatusUpdate,
 };

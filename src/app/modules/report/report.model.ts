@@ -13,12 +13,13 @@ const reportSchema = new Schema<IReport>(
     reason: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'reviewed', 'dismissed'],
+      enum: ['pending', 'reviewed', 'dismissed', 'resolved'],
       default: 'pending',
     },
+    adminNote: { type: String },
     image: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 reportSchema.index({ type: 1, targetId: 1 });

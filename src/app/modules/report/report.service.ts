@@ -6,6 +6,10 @@ import { Notification } from '../notification/notification.model';
 import StorageService from '../../services/storage.service';
 import QueryBuilder from '../../builder/QueryBuilder';
 import { IReport } from './report.interface';
+import { Product } from '../product/product.model';
+import { User } from '../user/user.model';
+import { emailTemplate } from '../../../shared/emailTemplate';
+import { emailHelper } from '../../../helpers/emailHelper';
 
 type PaginatedResult<T> = {
   data: T[];
@@ -87,9 +91,58 @@ const updateReportStatusToDB = async (
   return report;
 };
 
+const reviewReportToDB = async (
+  id: string,
+  status: 'resolved' | 'dismissed',
+  explanation: string,
+) => {
+  const report = await Report.findById(id);
+  if (!report) throw new Error('Report not found');
+
+  report.status = status;
+  report.adminNote = explanation;
+  await report.save();
+
+  let email;
+  let productName;
+  let productId;
+  let productDetails;
+
+  if (report.type === 'product') {
+    const product = await Product.findById(report.targetId);
+    if (product) {
+      const seller = await User.findById(product.sellerId);
+      email = seller?.email || undefined;
+      productName = product.title;
+      productId = String(product._id);
+      productDetails = `Condition: ${product.condition || 'N/A'}, Price: ${
+        product.price ?? 'N/A'
+      }`;
+    }
+  } else if (report.type === 'seller') {
+    const user = await User.findById(report.targetId);
+    email = user?.email || undefined;
+  }
+
+  if (email) {
+    const tpl = emailTemplate.reportStatusUpdate({
+      email,
+      decision: status,
+      explanation,
+      productName,
+      productId,
+      productDetails,
+    });
+    await emailHelper.sendEmail(tpl);
+  }
+
+  return report;
+};
+
 export const ReportService = {
   createReportToDB,
   deleteReportFromDB,
   getReportsFromDB,
   updateReportStatusToDB,
+  reviewReportToDB,
 };

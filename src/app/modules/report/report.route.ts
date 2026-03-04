@@ -37,4 +37,12 @@ router
     ReportController.updateReportStatus
   );
 
+router
+  .route('/:id/decision')
+  .patch(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    validateRequest(ReportValidation.reviewReportZodSchema),
+    ReportController.reviewReport
+  );
+
 export const ReportRoutes = router;

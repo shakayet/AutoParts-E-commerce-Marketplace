@@ -65,8 +65,25 @@ const updateReportStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const reviewReport = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status, explanation } = req.body as {
+    status: 'resolved' | 'dismissed';
+    explanation: string;
+  };
+  const result = await ReportService.reviewReportToDB(id, status, explanation);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Report reviewed successfully',
+    data: result,
+  });
+});
+
 export const ReportController = {
   createReport,
   getReports,
   updateReportStatus,
+  reviewReport,
 };

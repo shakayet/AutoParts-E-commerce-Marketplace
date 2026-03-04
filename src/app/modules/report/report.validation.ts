@@ -20,7 +20,14 @@ const getReportsZodSchema = z.object({
 
 const updateReportStatusZodSchema = z.object({
   body: z.object({
-    status: z.enum(['pending', 'reviewed', 'dismissed']),
+    status: z.enum(['pending', 'reviewed', 'dismissed', 'resolved']),
+  }),
+});
+
+const reviewReportZodSchema = z.object({
+  body: z.object({
+    status: z.enum(['resolved', 'dismissed']),
+    explanation: z.string({ required_error: 'Explanation is required' }),
   }),
 });
 
@@ -28,4 +35,5 @@ export const ReportValidation = {
   createReportZodSchema,
   getReportsZodSchema,
   updateReportStatusZodSchema,
+  reviewReportZodSchema,
 };
