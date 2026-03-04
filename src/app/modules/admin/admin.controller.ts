@@ -5,12 +5,13 @@ import { StatusCodes } from 'http-status-codes';
 import { AdminService } from './admin.service';
 
 const getTopProducts = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getTopProducts();
+  const result = await AdminService.getTopProducts(req.query);
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Top products retrieved successfully',
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 
