@@ -6,10 +6,17 @@ import { Product } from '../product/product.model';
 import { Notification } from '../notification/notification.model';
 import ApiError from '../../../errors/ApiError';
 import { StatusCodes } from 'http-status-codes';
+import QueryBuilder from '../../builder/QueryBuilder';
+import { IReview } from './review.interface';
+
+type PaginatedResult<T> = {
+  data: T[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
 
 const createReviewToDB = async (
   userId: string,
-  payload: { productId: string; rating: number; comment?: string }
+  payload: { productId: string; rating: number; comment?: string },
 ) => {
   const { productId, rating, comment } = payload;
 
@@ -22,7 +29,7 @@ const createReviewToDB = async (
   if (existing)
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      'You have already reviewed this product'
+      'You have already reviewed this product',
     );
 
   // create review
@@ -56,11 +63,32 @@ const createReviewToDB = async (
   return review;
 };
 
-const getReviewsForProduct = async (productId: string) => {
-  const reviews = await Review.find({ productId })
-    .populate('userId', 'name email')
-    .sort({ createdAt: -1 });
-  return reviews;
+const getReviewsForProduct = async (
+  productId: string,
+  query: any = {},
+): Promise<PaginatedResult<IReview>> => {
+  const queryBuilder = new QueryBuilder(
+    Review.find({ productId }).populate('userId', 'name email'),
+    query,
+  )
+    .sort()
+    .paginate()
+    .fields();
+
+  const [reviews, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: reviews as IReview[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
 };
 
 const deleteReview = async (reviewId: string, userId: string) => {

@@ -12,7 +12,10 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(CategoryController.getCategories)
+  .get(
+    validateRequest(CategoryValidation.getCategoriesZodSchema),
+    CategoryController.getCategories
+  )
   .post(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     fileUploadHandler(), // multer middleware

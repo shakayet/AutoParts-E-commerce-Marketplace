@@ -23,7 +23,7 @@ const createReport = catchAsync(async (req: Request, res: Response) => {
   }
 
   const image = getSingleFilePath(req.files as any, 'image');
-  
+
   const data = {
     ...payload,
     image,
@@ -47,7 +47,8 @@ const getReports = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Reports retrieved successfully',
-    data: result,
+    ...(result.meta ? { meta: result.meta } : {}),
+    data: result.data,
   });
 });
 
@@ -64,4 +65,8 @@ const updateReportStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const ReportController = { createReport, getReports, updateReportStatus };
+export const ReportController = {
+  createReport,
+  getReports,
+  updateReportStatus,
+};

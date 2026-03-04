@@ -12,18 +12,16 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(
-    FAQController.getFAQs
-  )
+  .get(FAQController.getFAQs)
   .post(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     fileUploadHandler(),
     (req: Request, res: Response, next: NextFunction) => {
       req.body = FAQValidation.createFAQZodSchema.parse(
-        JSON.parse(req?.body?.data)
+        JSON.parse(req?.body?.data),
       );
       return FAQController.createFAQ(req, res, next);
-    }
+    },
   );
 
 // validateRequest(FAQValidation.createFAQZodSchema), FAQController.createFAQ);
@@ -36,13 +34,16 @@ router
     (req: Request, res: Response, next: NextFunction) => {
       if (req.body.data) {
         req.body = FAQValidation.updateFAQZodSchema.parse(
-          JSON.parse(req?.body?.data)
+          JSON.parse(req?.body?.data),
         );
       }
 
       return FAQController.updateFAQ(req, res, next);
-    }
+    },
   )
-  .delete(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), FAQController.deleteFAQ);
+  .delete(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    FAQController.deleteFAQ,
+  );
 
 export const FAQRoutes = router;

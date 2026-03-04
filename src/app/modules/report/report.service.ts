@@ -4,6 +4,13 @@
 import { Report } from './report.model';
 import { Notification } from '../notification/notification.model';
 import StorageService from '../../services/storage.service';
+import QueryBuilder from '../../builder/QueryBuilder';
+import { IReport } from './report.interface';
+
+type PaginatedResult<T> = {
+  data: T[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
 
 const createReportToDB = async (
   reporterId: string,
@@ -42,12 +49,31 @@ const deleteReportFromDB = async (id: string) => {
   }
 };
 
-const getReportsFromDB = async (query: any = {}) => {
-  const q: any = {};
-  if (query.type) q.type = query.type;
-  if (query.targetId) q.targetId = query.targetId;
-  const reports = await Report.find(q).sort({ createdAt: -1 }).limit(500);
-  return reports;
+const getReportsFromDB = async (
+  query: any = {},
+): Promise<PaginatedResult<IReport>> => {
+  const searchableFields = ['reason', 'status'];
+  const queryBuilder = new QueryBuilder(Report.find({}), query)
+    .search(searchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const [reports, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: reports as IReport[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
 };
 
 const updateReportStatusToDB = async (

@@ -13,15 +13,18 @@ router
   .post(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(TermsValidation.createTermsZodSchema),
-    TermsController.createTerms
+    TermsController.createTerms,
   );
 router
   .route('/:id')
   .patch(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(TermsValidation.updateTermsZodSchema),
-    TermsController.updateTerms
+    TermsController.updateTerms,
   )
-  .delete(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), TermsController.deleteTerms);
+  .delete(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    TermsController.deleteTerms,
+  );
 
 export const TermsRoutes = router;

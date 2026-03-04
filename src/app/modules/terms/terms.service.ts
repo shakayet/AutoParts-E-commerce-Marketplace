@@ -23,4 +23,9 @@ const getTermsFromDB = async () => {
   return await Terms.find({ isActive: true }).sort({ createdAt: -1 });
 };
 
-export const TermsService = { createTermsToDB, updateTermsToDB, deleteTermsFromDB, getTermsFromDB };
+export const TermsService = {
+  createTermsToDB,
+  updateTermsToDB,
+  deleteTermsFromDB,
+  getTermsFromDB,
+};

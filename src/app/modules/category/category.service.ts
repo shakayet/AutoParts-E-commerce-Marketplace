@@ -9,13 +9,27 @@ import { CategoryRequest } from './categoryRequest.model';
 import { ICategory } from './category.interface';
 import { ICategoryRequest } from './categoryRequest.interface';
 import { Notification } from '../notification/notification.model';
+import QueryBuilder from '../../builder/QueryBuilder';
+
+type PaginatedResult<T> = {
+  data: T[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
 
 const createCategoryToDB = async (payload: Partial<ICategory>) => {
   // if an image path from local uploads is provided, upload it to S3 first
   if (payload.image && typeof payload.image === 'string') {
     const img = payload.image as string;
-    if (img.startsWith('/image/') || img.startsWith('/media/') || img.startsWith('/doc/')) {
-      const localPath = require('path').join(process.cwd(), 'uploads', img.replace(/^\//, ''));
+    if (
+      img.startsWith('/image/') ||
+      img.startsWith('/media/') ||
+      img.startsWith('/doc/')
+    ) {
+      const localPath = require('path').join(
+        process.cwd(),
+        'uploads',
+        img.replace(/^\//, ''),
+      );
       const url = await StorageService.uploadLocalFile(localPath);
       payload.image = url;
       if (!payload.icon) {
@@ -39,8 +53,16 @@ const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
   // if incoming payload includes a new image, upload it to S3 (if it's a local path)
   if (payload.image && typeof payload.image === 'string') {
     const img = payload.image as string;
-    if (img.startsWith('/image/') || img.startsWith('/media/') || img.startsWith('/doc/')) {
-      const localPath = require('path').join(process.cwd(), 'uploads', img.replace(/^\//, ''));
+    if (
+      img.startsWith('/image/') ||
+      img.startsWith('/media/') ||
+      img.startsWith('/doc/')
+    ) {
+      const localPath = require('path').join(
+        process.cwd(),
+        'uploads',
+        img.replace(/^\//, ''),
+      );
       const url = await StorageService.uploadLocalFile(localPath);
       payload.image = url;
       // keep icon in sync if caller provided same file
@@ -84,8 +106,31 @@ const getSingleCategoryFromDB = async (id: string) => {
   return res;
 };
 
-const getCategoriesFromDB = async () => {
-  return await Category.find({}).sort({ name: 1 });
+const getCategoriesFromDB = async (
+  query: any = {},
+): Promise<PaginatedResult<ICategory>> => {
+  const searchableFields = ['name', 'description'];
+  const queryBuilder = new QueryBuilder(Category.find({}), query)
+    .search(searchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const [categories, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: categories as ICategory[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
 };
 
 // category request flows

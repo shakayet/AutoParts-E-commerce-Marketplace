@@ -7,7 +7,7 @@ import { USER_ROLES } from '../../../enums/user';
 
 const router = express.Router();
 
-router.route('/:productId').get(ReviewController.getReviews);
+router.route('/:productId').get(validateRequest(ReviewValidation.getReviewsZodSchema), ReviewController.getReviews);
 
 router
   .route('/')

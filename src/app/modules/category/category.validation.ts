@@ -23,6 +23,16 @@ const createCategoryRequestZodSchema = z.object({
     image: z.string().optional(),
 });
 
+const getCategoriesZodSchema = z.object({
+  query: z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.string().optional(),
+    searchTerm: z.string().optional(),
+  }),
+});
+
 const reviewCategoryRequestZodSchema = z.object({
   body: z.object({
     status: z.enum(['approved', 'rejected']),
@@ -35,4 +45,5 @@ export const CategoryValidation = {
   updateCategoryZodSchema,
   createCategoryRequestZodSchema,
   reviewCategoryRequestZodSchema,
+  getCategoriesZodSchema,
 };

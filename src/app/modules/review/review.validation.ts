@@ -8,4 +8,13 @@ const createReviewZodSchema = z.object({
   }),
 });
 
-export const ReviewValidation = { createReviewZodSchema };
+const getReviewsZodSchema = z.object({
+  query: z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.string().optional(),
+  }),
+});
+
+export const ReviewValidation = { createReviewZodSchema, getReviewsZodSchema };

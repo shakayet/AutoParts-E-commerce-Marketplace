@@ -11,6 +11,10 @@ const getReportsZodSchema = z.object({
   query: z.object({
     type: z.enum(['product', 'seller']).optional(),
     targetId: z.string().optional(),
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    sortBy: z.string().optional(),
+    sortOrder: z.string().optional(),
   }),
 });
 

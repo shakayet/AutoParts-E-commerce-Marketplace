@@ -40,13 +40,14 @@ const createReview = catchAsync(async (req: Request, res: Response) => {
 
 const getReviews = catchAsync(async (req: Request, res: Response) => {
   const { productId } = req.params;
-  const result = await ReviewService.getReviewsForProduct(productId);
+  const result = await ReviewService.getReviewsForProduct(productId, req.query);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Reviews retrieved successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
