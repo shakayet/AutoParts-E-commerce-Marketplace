@@ -2,21 +2,11 @@ import { Product } from '../product/product.model';
 import { Category } from '../category/category.model';
 import QueryBuilder from '../../builder/QueryBuilder';
 
-const getTopProducts = async (query: Record<string, unknown>) => {
-  const productQuery = new QueryBuilder(
-    Product.find({}).sort({ averageRating: -1, totalRatings: -1 }),
-    query,
-  )
-    .paginate()
-    .fields();
-
-  const result = await productQuery.modelQuery;
-  const meta = await productQuery.countTotal();
-
-  return {
-    meta,
-    data: result,
-  };
+const getTopProducts = async () => {
+  const products = await Product.find({})
+    .sort({ averageRating: -1, totalRatings: -1 })
+    .limit(10);
+  return products;
 };
 
 const getCategorySummary = async () => {

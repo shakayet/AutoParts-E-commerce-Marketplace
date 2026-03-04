@@ -12,17 +12,17 @@ router
   .route('/')
   .get(
     validateRequest(ProductValidation.productQueryZodSchema),
-    ProductController.getProducts
+    ProductController.getProducts,
   )
   .post(
     auth(USER_ROLES.USER),
     fileUploadHandler(),
     (req: Request, res: Response, next: NextFunction) => {
       req.body = ProductValidation.createProductZodSchema.parse(
-        JSON.parse(req?.body?.data)
+        JSON.parse(req?.body?.data),
       );
       return ProductController.createProduct(req, res, next);
-    }
+    },
   );
 
 router.route('/advanced').get(ProductController.getAdvancedProducts);
@@ -33,13 +33,14 @@ router
   .patch(
     auth(USER_ROLES.USER),
     fileUploadHandler(),
-    // validateRequest(ProductValidation.updateProductZodSchema),
     (req: Request, res: Response, next: NextFunction) => {
-      req.body = ProductValidation.createProductZodSchema.parse(
-        JSON.parse(req?.body?.data)
-      );
+      if (req.body.data) {
+        req.body = ProductValidation.createProductZodSchema.parse(
+          JSON.parse(req.body.data),
+        );
+      }
       return ProductController.updateProduct(req, res, next);
-    }
+    },
   )
   .delete(auth(USER_ROLES.USER), ProductController.deleteProduct);
 
