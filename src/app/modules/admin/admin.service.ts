@@ -9,13 +9,17 @@ const getTopProducts = async () => {
   return products;
 };
 
-const getCategorySummary = async () => {
-  const categories = await Category.aggregate([
+const getCategorySummary = async (query: Record<string, unknown>) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const [result] = await Category.aggregate([
     {
       $lookup: {
         from: 'products',
-        localField: '_id',
-        foreignField: 'categoryId',
+        localField: 'name',
+        foreignField: 'category',
         as: 'products',
       },
     },
@@ -34,8 +38,26 @@ const getCategorySummary = async () => {
     {
       $sort: { itemCount: -1 },
     },
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: 'total' }],
+      },
+    },
   ]);
-  return categories;
+
+  const total = result?.totalCount?.[0]?.total || 0;
+  const totalPage = Math.ceil(total / limit) || 0;
+
+  return {
+    data: result?.data || [],
+    meta: {
+      total,
+      page,
+      limit,
+      totalPage,
+    },
+  };
 };
 
 const getProducts = async (query: Record<string, unknown>) => {

@@ -15,12 +15,13 @@ const getTopProducts = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getCategorySummary = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getCategorySummary();
+  const result = await AdminService.getCategorySummary(req.query);
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Category summary retrieved successfully',
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 
