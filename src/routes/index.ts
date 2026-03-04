@@ -11,6 +11,7 @@ import { TermsRoutes } from '../app/modules/terms/terms.route';
 import { PrivacyPolicyRoutes } from '../app/modules/privacyPolicy/privacyPolicy.route';
 import { SellerRoutes } from '../app/modules/seller/seller.route';
 import { WishlistRoutes } from '../app/modules/wishList/wishlist.route';
+import { AdminRoutes } from '../app/modules/admin/admin.route';
 const router = express.Router();
 
 const apiRoutes = [
@@ -61,6 +62,10 @@ const apiRoutes = [
   {
     path: '/wishlist',
     route: WishlistRoutes,
+  },
+  {
+    path: '/admin',
+    route: AdminRoutes,
   },
 ];
 
