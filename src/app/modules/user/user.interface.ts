@@ -9,7 +9,7 @@ export type IUser = {
   email: string;
   password: string;
   image?: string;
-  status: 'active' | 'delete';
+  status: 'active' | 'banned';
   verified: boolean;
   address?: string;
   coordinates?: {
