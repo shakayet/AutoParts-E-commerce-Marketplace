@@ -39,32 +39,6 @@ router
     }
   );
 
-router
-  .route('/:id')
-  .get(CategoryController.getSingleCategory)
-  .patch(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    fileUploadHandler(),
-    (req: Request, res: Response, next: NextFunction) => {
-      if (req.body.data) {
-        req.body = CategoryValidation.updateCategoryZodSchema.parse(
-          JSON.parse(req.body.data)
-        );
-      }
-
-      const imagePath = getSingleFilePath((req as any).files, 'image');
-      if (imagePath) {
-        req.body.image = imagePath;
-        req.body.icon = imagePath;
-      }
-
-      return CategoryController.updateCategory(req, res, next);
-    }
-  )
-  .delete(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    CategoryController.deleteCategory
-  );
 
 // requests
 router
@@ -95,6 +69,33 @@ router
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(CategoryValidation.reviewCategoryRequestZodSchema),
     CategoryController.reviewCategoryRequest
+  );
+
+router
+  .route('/:id')
+  .get(CategoryController.getSingleCategory)
+  .patch(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    fileUploadHandler(),
+    (req: Request, res: Response, next: NextFunction) => {
+      if (req.body.data) {
+        req.body = CategoryValidation.updateCategoryZodSchema.parse(
+          JSON.parse(req.body.data)
+        );
+      }
+
+      const imagePath = getSingleFilePath((req as any).files, 'image');
+      if (imagePath) {
+        req.body.image = imagePath;
+        req.body.icon = imagePath;
+      }
+
+      return CategoryController.updateCategory(req, res, next);
+    }
+  )
+  .delete(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    CategoryController.deleteCategory
   );
 
 export const CategoryRoutes = router;
