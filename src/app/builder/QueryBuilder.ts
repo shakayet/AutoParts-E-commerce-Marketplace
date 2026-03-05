@@ -15,10 +15,10 @@ class QueryBuilder<T> {
     if (searchTerm) {
       this.modelQuery = this.modelQuery.find({
         $or: searchableFields.map(
-          (field) =>
+          field =>
             ({
               [field]: { $regex: searchTerm, $options: 'i' },
-            } as FilterQuery<T>)
+            }) as FilterQuery<T>,
         ),
       });
     }
@@ -28,8 +28,46 @@ class QueryBuilder<T> {
   filter() {
     const queryObj = { ...this.query };
     const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
-    excludeFields.forEach((el) => delete queryObj[el]);
+    excludeFields.forEach(el => delete queryObj[el]);
     this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
+    return this;
+  }
+
+  priceRange() {
+    if (this.query.lowestPrice || this.query.highestPrice) {
+      const priceFilter: any = {};
+
+      if (this.query.lowestPrice) {
+        priceFilter.$gte = Number(this.query.lowestPrice);
+      }
+      if (this.query.highestPrice) {
+        priceFilter.$lte = Number(this.query.highestPrice);
+      }
+
+      this.modelQuery = this.modelQuery.find({
+        price: priceFilter,
+      } as FilterQuery<T>);
+    }
+    return this;
+  }
+
+  locationRadius() {
+    if (this.query.lat && this.query.lng && this.query.radius) {
+      const lat = Number(this.query.lat);
+      const lng = Number(this.query.lng);
+      const radius = Number(this.query.radius); // in kilometers
+
+      // Convert radius to radians (MongoDB uses radians for $geoWithin with $centerSphere)
+      const radiusInRadians = radius / 6378.1; // 6378.1 is the radius of the Earth in km
+
+      this.modelQuery = this.modelQuery.find({
+        location: {
+          $geoWithin: {
+            $centerSphere: [[lng, lat], radiusInRadians],
+          },
+        },
+      } as FilterQuery<T>);
+    }
     return this;
   }
 
@@ -73,22 +111,13 @@ class QueryBuilder<T> {
     };
   }
 
-  //fields filtering
-  fields() {
-    const fields =
-      (this?.query?.fields as string)?.split(',').join(' ') || '-__v';
-    this.modelQuery = this.modelQuery.select(fields);
-
-    return this;
-  }
-
   //populating
   populate(populateFields: string[], selectFields: Record<string, unknown>) {
     this.modelQuery = this.modelQuery.populate(
       populateFields.map(field => ({
         path: field,
         select: selectFields[field],
-      }))
+      })),
     );
     return this;
   }
@@ -96,7 +125,7 @@ class QueryBuilder<T> {
   //pagination information
   async getPaginationInfo() {
     const total = await this.modelQuery.model.countDocuments(
-      this.modelQuery.getFilter()
+      this.modelQuery.getFilter(),
     );
     const limit = Number(this?.query?.limit) || 10;
     const page = Number(this?.query?.page) || 1;
