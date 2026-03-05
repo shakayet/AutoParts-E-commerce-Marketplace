@@ -20,11 +20,8 @@ router
 router
   .route('/product/:productId')
   .get(
-    ReviewController.getSingleProductReview
+    validateRequest(ReviewValidation.getReviewsZodSchema),
+    ReviewController.getReviews
   );
-
-router
-  .route('/:id')
-  .delete(auth(USER_ROLES.USER), ReviewController.deleteReview);
 
 export const ReviewRoutes = router;
