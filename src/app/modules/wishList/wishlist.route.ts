@@ -9,7 +9,11 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(auth(USER_ROLES.USER), WishlistController.getWishlist)
+  .get(
+    auth(USER_ROLES.USER),
+    validateRequest(WishlistValidation.getWishlist),
+    WishlistController.getWishlist
+  )
   .post(
     auth(USER_ROLES.USER),
     validateRequest(WishlistValidation.addToWishlist),

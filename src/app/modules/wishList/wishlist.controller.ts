@@ -20,13 +20,14 @@ const addToWishlist = catchAsync(async (req: Request, res: Response) => {
 
 const getWishlist = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const result = await WishlistService.getWishlist(userId);
+  const result = await WishlistService.getWishlist(userId, req.query);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Wishlist retrieved successfully',
-    data: result,
+    meta: result.meta,
+    data: result.data,
   });
 });
 
