@@ -33,7 +33,6 @@ router.post(
 
 router.post(
   '/resend-otp',
-  // auth(USER_ROLES.USER),
   AuthController.resendOtp
 );
 
