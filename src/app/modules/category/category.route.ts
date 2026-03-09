@@ -26,13 +26,9 @@ router
         };
       }
 
-      let imagePath = getSingleFilePath((req as any).files, 'image');
-      if (!imagePath) {
-        imagePath = getSingleFilePath((req as any).files, 'icon');
-      }
-      if (imagePath) {
-        req.body.image = imagePath;
-        req.body.icon = imagePath;
+      const iconPath = getSingleFilePath((req as any).files, 'icon');
+      if (iconPath) {
+        req.body.icon = iconPath;
       }
 
       return CategoryController.createCategory(req, res, next);

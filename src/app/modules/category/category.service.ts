@@ -17,24 +17,21 @@ type PaginatedResult<T> = {
 };
 
 const createCategoryToDB = async (payload: Partial<ICategory>) => {
-  // if an image path from local uploads is provided, upload it to S3 first
-  if (payload.image && typeof payload.image === 'string') {
-    const img = payload.image as string;
+  // if an icon path from local uploads is provided, upload it to S3 first
+  if (payload.icon && typeof payload.icon === 'string') {
+    const icon = payload.icon as string;
     if (
-      img.startsWith('/image/') ||
-      img.startsWith('/media/') ||
-      img.startsWith('/doc/')
+      icon.startsWith('/image/') ||
+      icon.startsWith('/media/') ||
+      icon.startsWith('/doc/')
     ) {
       const localPath = require('path').join(
         process.cwd(),
         'uploads',
-        img.replace(/^\//, ''),
+        icon.replace(/^\//, ''),
       );
       const url = await StorageService.uploadLocalFile(localPath);
-      payload.image = url;
-      if (!payload.icon) {
-        payload.icon = url;
-      }
+      payload.icon = url;
     }
   }
 
@@ -50,34 +47,26 @@ const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
   if (!existing)
     throw new ApiError(StatusCodes.NOT_FOUND, 'Category not found');
 
-  // if incoming payload includes a new image, upload it to S3 (if it's a local path)
-  if (payload.image && typeof payload.image === 'string') {
-    const img = payload.image as string;
+  // if incoming payload includes a new icon, upload it to S3 (if it's a local path)
+  if (payload.icon && typeof payload.icon === 'string') {
+    const icon = payload.icon as string;
     if (
-      img.startsWith('/image/') ||
-      img.startsWith('/media/') ||
-      img.startsWith('/doc/')
+      icon.startsWith('/image/') ||
+      icon.startsWith('/media/') ||
+      icon.startsWith('/doc/')
     ) {
       const localPath = require('path').join(
         process.cwd(),
         'uploads',
-        img.replace(/^\//, ''),
+        icon.replace(/^\//, ''),
       );
       const url = await StorageService.uploadLocalFile(localPath);
-      payload.image = url;
-      // keep icon in sync if caller provided same file
-      if (!payload.icon) {
-        payload.icon = url;
-      }
+      payload.icon = url;
     }
   }
 
-  if (payload.image && existing.image) {
-    await StorageService.deleteByUrl(existing.image as string);
-    // we also stored icon same path previously, clear it
-    if (existing.icon && existing.icon === existing.image) {
-      await StorageService.deleteByUrl(existing.icon as string);
-    }
+  if (payload.icon && existing.icon) {
+    await StorageService.deleteByUrl(existing.icon as string);
   }
 
   const cat = await Category.findByIdAndUpdate(
@@ -92,9 +81,6 @@ const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
 const deleteCategoryFromDB = async (id: string) => {
   const res = await Category.findByIdAndDelete(id);
   if (!res) throw new ApiError(StatusCodes.NOT_FOUND, 'Category not found');
-  if (res.image) {
-    await StorageService.deleteByUrl(res.image as string);
-  }
   if (res.icon) {
     await StorageService.deleteByUrl(res.icon as string);
   }
