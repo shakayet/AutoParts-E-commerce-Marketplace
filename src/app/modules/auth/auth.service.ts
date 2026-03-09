@@ -323,7 +323,7 @@ const refreshTokenToDB = async (payload: IRefreshTokenRequest) => {
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not found');
   }
 
-  if (user.status === 'delete') {
+  if (user.status === 'banned') {
     throw new ApiError(
       StatusCodes.UNAUTHORIZED,
       'Account is deactivated. Please contact support',
