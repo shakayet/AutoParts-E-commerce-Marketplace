@@ -28,6 +28,10 @@ router
 router.route('/advanced').get(ProductController.getAdvancedProducts);
 
 router
+  .route('/my-products')
+  .get(auth(USER_ROLES.USER), ProductController.getMyProducts);
+
+router
   .route('/:id')
   .get(ProductController.getProductById)
   .patch(
@@ -42,7 +46,10 @@ router
       return ProductController.updateProduct(req, res, next);
     },
   )
-  .delete(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), ProductController.deleteProduct);
+  .delete(
+    auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    ProductController.deleteProduct,
+  );
 
 router.route('/:id/related').get(ProductController.getRelatedProducts);
 

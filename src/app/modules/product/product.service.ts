@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
 import { Product } from './product.model';
@@ -105,16 +105,41 @@ const getProductsFromDB = async (
   };
 };
 
-const getRelatedProducts = async (productId: string): Promise<IProduct[]> => {
+const getRelatedProducts = async (
+  productId: string,
+  filters: any = {},
+): Promise<PaginatedResult<IProduct>> => {
   const prod = await Product.findById(productId);
-  if (!prod) return [];
-  const related = await Product.find({
-    _id: { $ne: prod._id },
-    category: prod.category,
-  })
-    .sort({ averageRating: -1 })
-    .limit(4);
-  return related as unknown as IProduct[];
+  if (!prod)
+    return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+
+  const queryBuilder = new QueryBuilder(
+    Product.find({
+      _id: { $ne: prod._id },
+      category: prod.category,
+    }),
+    filters,
+  )
+    .search(['name', 'description', 'brand', 'category'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const [products, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: products as unknown as IProduct[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
 };
 
 const getAdvancedProductsFromDB = async (
@@ -152,6 +177,33 @@ const getAdvancedProductsFromDB = async (
   };
 };
 
+const getMyProductsFromDB = async (
+  sellerId: string,
+  filters: any = {},
+): Promise<PaginatedResult<IProduct>> => {
+  const queryBuilder = new QueryBuilder(Product.find({ sellerId }), filters)
+    .search(['name', 'description', 'brand', 'category'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const [products, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: products as unknown as IProduct[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
+};
+
 export const ProductService = {
   createProductToDB,
   updateProductToDB,
@@ -160,4 +212,5 @@ export const ProductService = {
   getProductsFromDB,
   getRelatedProducts,
   getAdvancedProductsFromDB,
+  getMyProductsFromDB,
 };
