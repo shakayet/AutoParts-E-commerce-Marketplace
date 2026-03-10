@@ -143,7 +143,10 @@ const reviewCategoryRequestToDB = async (
   status: 'approved' | 'rejected',
   adminComment?: string,
 ) => {
-  const req = await CategoryRequest.findById(id).populate('requesterId');
+  const req = await CategoryRequest.findById(id).populate(
+    'requesterId',
+    '_id name email',
+  );
   if (!req)
     throw new ApiError(StatusCodes.NOT_FOUND, 'Category request not found');
 
@@ -151,20 +154,24 @@ const reviewCategoryRequestToDB = async (
   await req.save();
 
   if (status === 'approved') {
-    // create category if not exists
-    const exists = await Category.findOne({ name: req.name });
-    if (!exists) {
-      const slug = req.name
-        .toString()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      await Category.create({
-        name: req.name,
-        description: req.description,
-        slug,
-      } as Partial<ICategory>);
-    }
+    const slug = req.name
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    await Category.findOneAndUpdate(
+      { name: req.name },
+      {
+        $set: {
+          name: req.name,
+          description: req.description,
+          slug,
+          icon: req.icon,
+        },
+      },
+      { upsert: true, new: true },
+    );
   }
 
   // notify requester
