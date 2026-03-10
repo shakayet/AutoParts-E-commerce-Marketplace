@@ -42,7 +42,7 @@ router
       return ProductController.updateProduct(req, res, next);
     },
   )
-  .delete(auth(USER_ROLES.USER), ProductController.deleteProduct);
+  .delete(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), ProductController.deleteProduct);
 
 router.route('/:id/related').get(ProductController.getRelatedProducts);
 
