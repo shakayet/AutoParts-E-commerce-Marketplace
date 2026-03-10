@@ -26,7 +26,6 @@ const userSchema = new Schema<IUser, UserModal>(
     password: {
       type: String,
       required: true,
-      select: 0,
       minlength: 8,
     },
     image: {
@@ -84,7 +83,6 @@ const userSchema = new Schema<IUser, UserModal>(
           default: null,
         },
       },
-      select: 0,
     },
   },
   { timestamps: true },

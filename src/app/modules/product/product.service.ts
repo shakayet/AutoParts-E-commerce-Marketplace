@@ -90,6 +90,7 @@ const getProductsFromDB = async (
 
   const total = await Product.countDocuments(q);
   const products = await Product.find(q)
+    .populate('sellerId', 'name whatsappNumber coordinates')
     .skip((page - 1) * limit)
     .limit(limit)
     .sort({ createdAt: -1 });
@@ -117,7 +118,7 @@ const getRelatedProducts = async (
     Product.find({
       _id: { $ne: prod._id },
       category: prod.category,
-    }),
+    }).populate('sellerId', 'name whatsappNumber coordinates'),
     filters,
   )
     .search(['name', 'description', 'brand', 'category'])
@@ -149,7 +150,10 @@ const getAdvancedProductsFromDB = async (
   const searchableFields = ['name', 'description', 'brand', 'category'];
 
   const queryBuilder = new QueryBuilder(
-    Product.find({ isBlocked: false }),
+    Product.find({ isBlocked: false }).populate(
+      'sellerId',
+      'name whatsappNumber coordinates',
+    ),
     filter,
   )
     .search(searchableFields)
@@ -181,7 +185,13 @@ const getMyProductsFromDB = async (
   sellerId: string,
   filters: any = {},
 ): Promise<PaginatedResult<IProduct>> => {
-  const queryBuilder = new QueryBuilder(Product.find({ sellerId }), filters)
+  const queryBuilder = new QueryBuilder(
+    Product.find({ sellerId }).populate(
+      'sellerId',
+      'name whatsappNumber coordinates',
+    ),
+    filters,
+  )
     .search(['name', 'description', 'brand', 'category'])
     .filter()
     .sort()
