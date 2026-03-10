@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../../errors/ApiError';
@@ -5,6 +6,7 @@ import { Product } from './product.model';
 import StorageService from '../../services/storage.service';
 import { IProduct } from './product.interface';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { FilterQuery } from 'mongoose';
 
 type PaginatedResult<T> = {
   data: T[];
@@ -77,31 +79,58 @@ const getProductByIdFromDB = async (id: string): Promise<IProduct> => {
 };
 
 const getProductsFromDB = async (
-  filter: any = {},
+  filters: any = {},
 ): Promise<PaginatedResult<IProduct>> => {
-  const q: any = { isBlocked: false };
-  if (filter.category) q.category = filter.category;
-  if (filter.brand) q.brand = filter.brand;
-  if (filter.carModel) q.carModels = { $in: [filter.carModel] };
-  if (filter.chassisNumber) q.chassisNumber = filter.chassisNumber;
-  if (filter.keyword) q.$text = { $search: filter.keyword };
-  const page = Number(filter.page || 1);
-  const limit = Number(filter.limit || 20);
+  const { userLat, userLng, radius, ...restFilters } = filters;
 
-  const total = await Product.countDocuments(q);
-  const products = await Product.find(q)
-    .populate('sellerId', 'name whatsappNumber coordinates')
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .sort({ createdAt: -1 });
+  const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
+
+  if (userLat && userLng) {
+    baseQuery.coordinates = {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [parseFloat(userLng), parseFloat(userLat)],
+        },
+        ...(radius && { $maxDistance: parseFloat(radius) * 1000 }),
+      },
+    };
+  }
+
+  delete restFilters.lat;
+  delete restFilters.lng;
+  delete restFilters.radius;
+
+  const queryBuilder = new QueryBuilder(
+    Product.find(baseQuery).populate(
+      'sellerId',
+      'name whatsappNumber coordinates',
+    ),
+    restFilters,
+  )
+    .search(['name', 'description', 'brand', 'category'])
+    .filter()
+    .priceRange()
+    .locationRadius();
+
+  if (!(userLat && userLng)) {
+    queryBuilder.sort();
+  }
+
+  queryBuilder.paginate().fields();
+
+  const [products, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
 
   return {
     data: products as unknown as IProduct[],
     meta: {
-      total: Number(total),
-      page,
-      limit,
-      totalPages: Math.ceil(Number(total) / limit) || 0,
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
     },
   };
 };
@@ -127,44 +156,6 @@ const getRelatedProducts = async (
     .paginate()
     .fields();
 
-  const [products, total] = await Promise.all([
-    queryBuilder.modelQuery.exec(),
-    queryBuilder.getPaginationInfo(),
-  ]);
-
-  return {
-    data: products as unknown as IProduct[],
-    meta: {
-      total: total.total,
-      page: total.page,
-      limit: total.limit,
-      totalPages: total.totalPage,
-    },
-  };
-};
-
-const getAdvancedProductsFromDB = async (
-  filter: any = {},
-): Promise<PaginatedResult<IProduct>> => {
-  // Build base query
-  const searchableFields = ['name', 'description', 'brand', 'category'];
-
-  const queryBuilder = new QueryBuilder(
-    Product.find({ isBlocked: false }).populate(
-      'sellerId',
-      'name whatsappNumber coordinates',
-    ),
-    filter,
-  )
-    .search(searchableFields)
-    .filter()
-    .priceRange()
-    .locationRadius()
-    .sort()
-    .paginate()
-    .fields();
-
-  // Get products and total count
   const [products, total] = await Promise.all([
     queryBuilder.modelQuery.exec(),
     queryBuilder.getPaginationInfo(),
@@ -221,6 +212,5 @@ export const ProductService = {
   getProductByIdFromDB,
   getProductsFromDB,
   getRelatedProducts,
-  getAdvancedProductsFromDB,
   getMyProductsFromDB,
 };

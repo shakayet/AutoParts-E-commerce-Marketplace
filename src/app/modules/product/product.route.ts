@@ -25,8 +25,6 @@ router
     },
   );
 
-router.route('/advanced').get(ProductController.getAdvancedProducts);
-
 router
   .route('/my-products')
   .get(auth(USER_ROLES.USER), ProductController.getMyProducts);

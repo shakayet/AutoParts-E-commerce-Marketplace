@@ -16,16 +16,32 @@ const productSchema = new Schema<IProduct, ProductModel>(
     discount: { type: Number, default: 0 },
     mainImage: { type: String },
     galleryImages: [{ type: String }],
-    sellerId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
+    sellerId: {
+      type: Schema.Types.ObjectId as any,
+      ref: 'User',
+      required: true,
+    },
     averageRating: { type: Number, default: 0 },
     totalRatings: { type: Number, default: 0 },
     sellerRating: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
+    coordinates: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        required: true,
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // text index for keyword search
 productSchema.index({ title: 'text', description: 'text', brand: 'text' });
+productSchema.index({ coordinates: '2dsphere' });
 
 export const Product = model<IProduct, ProductModel>('Product', productSchema);

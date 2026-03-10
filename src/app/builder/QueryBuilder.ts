@@ -61,7 +61,7 @@ class QueryBuilder<T> {
       const radiusInRadians = radius / 6378.1; // 6378.1 is the radius of the Earth in km
 
       this.modelQuery = this.modelQuery.find({
-        location: {
+        coordinates: {
           $geoWithin: {
             $centerSphere: [[lng, lat], radiusInRadians],
           },
