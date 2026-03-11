@@ -82,67 +82,10 @@ const getCategories = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// requests
-const createCategoryRequest = catchAsync(
-  async (req: Request, res: Response) => {
-    const user = req.user;
-    const userId =
-      (user as any)?.id || (user as any)?._id || (user as any)?.userId;
-    const image = getSingleFilePath((req as any).files, 'image');
-    const payload = {
-      ...req.body,
-      ...(image ? { image } : {}),
-    };
-
-    const result = await CategoryService.createCategoryRequestToDB(
-      userId,
-      payload,
-    );
-
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.CREATED,
-      message: 'Category request submitted',
-      data: result,
-    });
-  },
-);
-
-const getCategoryRequests = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryService.getCategoryRequestsFromDB();
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Category requests retrieved',
-    data: result,
-  });
-});
-
-const reviewCategoryRequest = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { status, adminComment } = req.body;
-    const result = await CategoryService.reviewCategoryRequestToDB(
-      id,
-      status,
-      adminComment,
-    );
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Category request reviewed',
-      data: result,
-    });
-  },
-);
-
 export const CategoryController = {
   createCategory,
   updateCategory,
   deleteCategory,
   getCategories,
-  createCategoryRequest,
-  getCategoryRequests,
-  reviewCategoryRequest,
   getSingleCategory,
 };

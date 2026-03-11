@@ -14,7 +14,7 @@ router
   .route('/')
   .get(
     validateRequest(CategoryValidation.getCategoriesZodSchema),
-    CategoryController.getCategories
+    CategoryController.getCategories,
   )
   .post(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
@@ -32,39 +32,7 @@ router
       }
 
       return CategoryController.createCategory(req, res, next);
-    }
-  );
-
-
-// requests
-router
-  .route('/request')
-  .post(
-    auth(USER_ROLES.USER),
-    fileUploadHandler(),
-    (req: Request, res: Response, next: NextFunction) => {
-      if (req.body.data) {
-        req.body = CategoryValidation.createCategoryRequestZodSchema.parse(
-          JSON.parse(req.body.data)
-        );
-      }
-      if (req.file) {
-        req.body.icon = req.file.path;
-      }
-      return CategoryController.createCategoryRequest(req, res, next);
-    }
-  )
-  .get(
-    auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    CategoryController.getCategoryRequests
-  );
-
-router
-  .route('/request/:id/review')
-  .patch(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    validateRequest(CategoryValidation.reviewCategoryRequestZodSchema),
-    CategoryController.reviewCategoryRequest
+    },
   );
 
 router
@@ -76,7 +44,7 @@ router
     (req: Request, res: Response, next: NextFunction) => {
       if (req.body.data) {
         req.body = CategoryValidation.updateCategoryZodSchema.parse(
-          JSON.parse(req.body.data)
+          JSON.parse(req.body.data),
         );
       }
 
@@ -87,11 +55,11 @@ router
       }
 
       return CategoryController.updateCategory(req, res, next);
-    }
+    },
   )
   .delete(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    CategoryController.deleteCategory
+    CategoryController.deleteCategory,
   );
 
 export const CategoryRoutes = router;
