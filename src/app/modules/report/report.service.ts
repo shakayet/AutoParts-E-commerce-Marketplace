@@ -57,7 +57,8 @@ const getReportsFromDB = async (
   query: any = {},
 ): Promise<PaginatedResult<IReport>> => {
   const searchableFields = ['reason', 'status'];
-  const queryBuilder = new QueryBuilder(Report.find({}), query)
+  const baseQuery = Report.find({}).populate('reporterId', 'name email');
+  const queryBuilder = new QueryBuilder(baseQuery, query)
     .search(searchableFields)
     .filter()
     .sort()

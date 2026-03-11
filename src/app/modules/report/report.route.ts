@@ -15,10 +15,10 @@ router
     fileUploadHandler(),
     (req: Request, res: Response, next: NextFunction) => {
       req.body = ReportValidation.createReportZodSchema.parse(
-        JSON.parse(req?.body?.data)
+        JSON.parse(req?.body?.data),
       );
       return ReportController.createReport(req, res, next);
-    }
+    },
   );
 
 router
@@ -26,7 +26,7 @@ router
   .get(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(ReportValidation.getReportsZodSchema),
-    ReportController.getReports
+    ReportController.getReports,
   );
 
 router
@@ -34,7 +34,11 @@ router
   .patch(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(ReportValidation.updateReportStatusZodSchema),
-    ReportController.updateReportStatus
+    ReportController.updateReportStatus,
+  )
+  .delete(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    ReportController.deleteReport,
   );
 
 router
@@ -42,7 +46,7 @@ router
   .patch(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(ReportValidation.reviewReportZodSchema),
-    ReportController.reviewReport
+    ReportController.reviewReport,
   );
 
 export const ReportRoutes = router;
