@@ -104,7 +104,9 @@ const reviewReportToDB = async (
   report.adminNote = explanation;
   await report.save();
 
-  let email;
+  const reporter = await User.findById(report.reporterId);
+  const email = reporter?.email || undefined;
+
   let productName;
   let productId;
   let productDetails;
@@ -112,17 +114,12 @@ const reviewReportToDB = async (
   if (report.type === 'product') {
     const product = await Product.findById(report.targetId);
     if (product) {
-      const seller = await User.findById(product.sellerId);
-      email = seller?.email || undefined;
       productName = product.title;
       productId = String(product._id);
       productDetails = `Condition: ${product.condition || 'N/A'}, Price: ${
         product.price ?? 'N/A'
       }`;
     }
-  } else if (report.type === 'seller') {
-    const user = await User.findById(report.targetId);
-    email = user?.email || undefined;
   }
 
   if (email) {

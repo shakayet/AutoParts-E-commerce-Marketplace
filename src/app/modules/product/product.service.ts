@@ -6,6 +6,7 @@ import { Product } from './product.model';
 import StorageService from '../../services/storage.service';
 import { IProduct } from './product.interface';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { User } from '../user/user.model';
 import { FilterQuery } from 'mongoose';
 
 type PaginatedResult<T> = {
@@ -16,7 +17,34 @@ type PaginatedResult<T> = {
 const createProductToDB = async (
   payload: Partial<IProduct>,
 ): Promise<IProduct> => {
-  const product = await Product.create(payload as Partial<IProduct>);
+  const sellerId = payload.sellerId as string | undefined;
+  if (!sellerId) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Seller not specified');
+  }
+
+  const seller = await User.findById(sellerId);
+  if (!seller) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Seller not found');
+  }
+
+  const lat = seller.coordinates?.lat;
+  const lng = seller.coordinates?.lng;
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Seller location is not set. Please update your profile location first',
+    );
+  }
+
+  const doc: any = {
+    ...payload,
+    coordinates: {
+      type: 'Point',
+      coordinates: [lng, lat],
+    },
+  };
+
+  const product = await Product.create(doc);
   if (!product)
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create product');
   return product as unknown as IProduct;
