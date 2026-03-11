@@ -49,11 +49,19 @@ const updateProfile = catchAsync(
     };
     const result = await UserService.updateProfileToDB(user, data);
 
+    let out: any = result as any;
+    if (out && typeof out?.toObject === 'function') {
+      out = out.toObject();
+    }
+    if (out && out.authentication) {
+      delete out.authentication;
+    }
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: 'Profile updated successfully',
-      data: result,
+      data: out,
     });
   },
 );
