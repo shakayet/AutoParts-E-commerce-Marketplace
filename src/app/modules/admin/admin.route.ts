@@ -7,7 +7,6 @@ const router = express.Router();
 
 router.get(
   '/top-products',
-  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   AdminController.getTopProducts,
 );
 
