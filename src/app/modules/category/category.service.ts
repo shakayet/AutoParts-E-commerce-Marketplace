@@ -18,8 +18,25 @@ const createCategoryToDB = async (payload: Partial<ICategory>) => {
   const exists = await Category.findOne({ name: payload.name });
   if (exists)
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Category already exists');
-  const cat = await Category.create(payload as Partial<ICategory>);
-  return cat;
+  try {
+    const cat = await Category.create(payload as Partial<ICategory>);
+    return cat;
+  } catch (error: any) {
+    if (
+      error?.code === 11000 &&
+      typeof error?.message === 'string' &&
+      error.message.includes('icon_1')
+    ) {
+      try {
+        await Category.collection.dropIndex('icon_1');
+        const cat = await Category.create(payload as Partial<ICategory>);
+        return cat;
+      } catch (innerErr) {
+        throw innerErr;
+      }
+    }
+    throw error;
+  }
 };
 
 const updateCategoryToDB = async (id: string, payload: Partial<ICategory>) => {
