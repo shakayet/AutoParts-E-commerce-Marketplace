@@ -30,6 +30,13 @@ router
   .get(auth(USER_ROLES.USER), ProductController.getMyProducts);
 
 router
+  .route('/search')
+  .get(
+    validateRequest(ProductValidation.searchProductQueryZodSchema),
+    ProductController.searchProducts,
+  );
+
+router
   .route('/:id')
   .get(ProductController.getProductById)
   .patch(

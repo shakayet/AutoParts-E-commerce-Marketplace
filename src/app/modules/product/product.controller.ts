@@ -159,6 +159,24 @@ const getProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const searchProducts = catchAsync(async (req: Request, res: Response) => {
+  const query = req.query;
+  const result = await ProductService.searchProductsFromDB(query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Products searched successfully',
+    data: result.data,
+    pagination: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPages,
+      total: result.meta.total,
+    },
+  });
+});
+
 const getRelatedProducts = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const filters = req.query;
@@ -207,4 +225,5 @@ export const ProductController = {
   getProducts,
   getRelatedProducts,
   getMyProducts,
+  searchProducts,
 };

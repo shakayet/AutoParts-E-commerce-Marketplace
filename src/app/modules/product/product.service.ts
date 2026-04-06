@@ -136,7 +136,7 @@ const getProductsFromDB = async (
     ),
     restFilters,
   )
-    .search(['name', 'description', 'brand', 'category'])
+    .search(['title', 'description', 'brand', 'category'])
     .filter()
     .priceRange()
     .locationRadius();
@@ -146,6 +146,61 @@ const getProductsFromDB = async (
   }
 
   queryBuilder.paginate().fields();
+
+  const [products, total] = await Promise.all([
+    queryBuilder.modelQuery.exec(),
+    queryBuilder.getPaginationInfo(),
+  ]);
+
+  return {
+    data: products as unknown as IProduct[],
+    meta: {
+      total: total.total,
+      page: total.page,
+      limit: total.limit,
+      totalPages: total.totalPage,
+    },
+  };
+};
+
+const searchProductsFromDB = async (
+  query: Record<string, unknown>,
+): Promise<PaginatedResult<IProduct>> => {
+  const { searchTerm, category, title, carModels, brand, ...restFilters } =
+    query;
+
+  const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
+
+  // Initialize filters with any remaining query parameters
+  const filters: Record<string, any> = { ...restFilters };
+
+  // Add case-insensitive partial matching for specified fields
+  if (category) {
+    filters.category = { $regex: category, $options: 'i' };
+  }
+  if (title) {
+    filters.title = { $regex: title, $options: 'i' };
+  }
+  if (brand) {
+    filters.brand = { $regex: brand, $options: 'i' };
+  }
+  if (carModels) {
+    filters.carModels = { $regex: carModels, $options: 'i' };
+  }
+
+  // Use QueryBuilder for handling search, filtering, sorting, and pagination
+  const queryBuilder = new QueryBuilder(
+    Product.find(baseQuery).populate(
+      'sellerId',
+      'name whatsappNumber coordinates',
+    ),
+    { ...filters, searchTerm },
+  )
+    .search(['title', 'description', 'brand', 'category'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
 
   const [products, total] = await Promise.all([
     queryBuilder.modelQuery.exec(),
@@ -178,7 +233,7 @@ const getRelatedProducts = async (
     }).populate('sellerId', 'name whatsappNumber coordinates'),
     filters,
   )
-    .search(['name', 'description', 'brand', 'category'])
+    .search(['title', 'description', 'brand', 'category'])
     .filter()
     .sort()
     .paginate()
@@ -211,7 +266,7 @@ const getMyProductsFromDB = async (
     ),
     filters,
   )
-    .search(['name', 'description', 'brand', 'category'])
+    .search(['title', 'description', 'brand', 'category'])
     .filter()
     .sort()
     .paginate()
@@ -241,4 +296,5 @@ export const ProductService = {
   getProductsFromDB,
   getRelatedProducts,
   getMyProductsFromDB,
+  searchProductsFromDB,
 };

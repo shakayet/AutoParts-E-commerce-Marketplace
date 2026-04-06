@@ -42,8 +42,23 @@ const productQueryZodSchema = z.object({
   }),
 });
 
+const searchProductQueryZodSchema = z.object({
+  query: z.object({
+    searchTerm: z.string().optional(),
+    category: z.string().optional(),
+    title: z.string().optional(),
+    carModels: z.string().optional(),
+    brand: z.string().optional(),
+    page: z.string().optional(),
+    limit: z.string().optional(),
+    sort: z.string().optional(),
+    fields: z.string().optional(),
+  }),
+});
+
 export const ProductValidation = {
   createProductZodSchema,
   updateProductZodSchema,
   productQueryZodSchema,
+  searchProductQueryZodSchema,
 };
