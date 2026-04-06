@@ -1,16 +1,16 @@
 import { z } from 'zod';
 
 const createProductZodSchema = z.object({
-    title: z.string({ required_error: 'Title is required' }),
-    category: z.string({ required_error: 'Category is required' }),
-    brand: z.string().optional(),
-    description: z.string().optional(),
-    carModels: z.array(z.string()).optional(),
-    chassisNumber: z.string().optional(),
-    condition: z.enum(['new', 'used', 'refurbished']).optional(),
-    warranty: z.string().optional(),
-    price: z.number({ required_error: 'Price is required' }),
-    discount: z.number().optional(),
+  title: z.string({ required_error: 'Title is required' }),
+  category: z.string({ required_error: 'Category is required' }),
+  brand: z.string().optional(),
+  description: z.string().optional(),
+  carModels: z.array(z.string()).optional(),
+  chassisNumber: z.string().optional(),
+  condition: z.enum(['new', 'used', 'refurbished']).optional(),
+  warranty: z.string().optional(),
+  price: z.number({ required_error: 'Price is required' }),
+  discount: z.number().optional(),
 });
 
 const updateProductZodSchema = z.object({
@@ -49,6 +49,9 @@ const searchProductQueryZodSchema = z.object({
     title: z.string().optional(),
     carModels: z.string().optional(),
     brand: z.string().optional(),
+    userLat: z.string().optional(),
+    userLng: z.string().optional(),
+    radius: z.string().optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
     sort: z.string().optional(),

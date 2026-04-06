@@ -166,10 +166,37 @@ const getProductsFromDB = async (
 const searchProductsFromDB = async (
   query: Record<string, unknown>,
 ): Promise<PaginatedResult<IProduct>> => {
-  const { searchTerm, category, title, carModels, brand, ...restFilters } =
-    query;
+  const {
+    searchTerm,
+    category,
+    title,
+    carModels,
+    brand,
+    userLat,
+    userLng,
+    radius,
+    ...restFilters
+  } = query;
 
   const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
+
+  // Prioritize proximity if user location is provided
+  if (userLat && userLng) {
+    baseQuery.coordinates = {
+      $nearSphere: {
+        $geometry: {
+          type: 'Point',
+          coordinates: [
+            parseFloat(userLng as string),
+            parseFloat(userLat as string),
+          ],
+        },
+        ...(radius && {
+          $maxDistance: parseFloat(radius as string) * 1000,
+        }),
+      },
+    };
+  }
 
   // Initialize filters with any remaining query parameters
   const filters: Record<string, any> = { ...restFilters };
@@ -188,7 +215,7 @@ const searchProductsFromDB = async (
     filters.carModels = { $regex: carModels, $options: 'i' };
   }
 
-  // Use QueryBuilder for handling search, filtering, sorting, and pagination
+  // Use QueryBuilder for handling search, filtering, and pagination
   const queryBuilder = new QueryBuilder(
     Product.find(baseQuery).populate(
       'sellerId',
@@ -197,10 +224,14 @@ const searchProductsFromDB = async (
     { ...filters, searchTerm },
   )
     .search(['title', 'description', 'brand', 'category'])
-    .filter()
-    .sort()
-    .paginate()
-    .fields();
+    .filter();
+
+  // Only apply default sorting if proximity sorting is not active
+  if (!(userLat && userLng)) {
+    queryBuilder.sort();
+  }
+
+  queryBuilder.paginate().fields();
 
   const [products, total] = await Promise.all([
     queryBuilder.modelQuery.exec(),
