@@ -96,8 +96,31 @@ class QueryBuilder<T> {
     return this;
   }
 
+  private getCountFilter(filter: any) {
+    const countFilter = { ...filter };
+    if (countFilter.coordinates) {
+      const geoFilter =
+        countFilter.coordinates.$near || countFilter.coordinates.$nearSphere;
+      if (geoFilter) {
+        const { $geometry, $maxDistance } = geoFilter;
+        if ($maxDistance) {
+          // Convert maxDistance (meters) to radians for $centerSphere
+          const radiusInRadians = $maxDistance / 6378100;
+          countFilter.coordinates = {
+            $geoWithin: {
+              $centerSphere: [$geometry.coordinates, radiusInRadians],
+            },
+          };
+        } else {
+          delete countFilter.coordinates;
+        }
+      }
+    }
+    return countFilter;
+  }
+
   async countTotal() {
-    const totalQueries = this.modelQuery.getFilter();
+    const totalQueries = this.getCountFilter(this.modelQuery.getFilter());
     const total = await this.modelQuery.model.countDocuments(totalQueries);
     const page = Number(this?.query?.page) || 1;
     const limit = Number(this?.query?.limit) || 10;
@@ -124,9 +147,8 @@ class QueryBuilder<T> {
 
   //pagination information
   async getPaginationInfo() {
-    const total = await this.modelQuery.model.countDocuments(
-      this.modelQuery.getFilter(),
-    );
+    const totalQueries = this.getCountFilter(this.modelQuery.getFilter());
+    const total = await this.modelQuery.model.countDocuments(totalQueries);
     const limit = Number(this?.query?.limit) || 10;
     const page = Number(this?.query?.page) || 1;
     const totalPage = Math.ceil(total / limit);
