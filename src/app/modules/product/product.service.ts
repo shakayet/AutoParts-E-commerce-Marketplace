@@ -175,6 +175,8 @@ const searchProductsFromDB = async (
     userLat,
     userLng,
     radius,
+    lowestPrice,
+    highestPrice,
     page: queryPage,
     limit: queryLimit,
     sort: querySort,
@@ -213,6 +215,13 @@ const searchProductsFromDB = async (
     if (title) matchStage.title = { $regex: title, $options: 'i' };
     if (brand) matchStage.brand = { $regex: brand, $options: 'i' };
     if (carModels) matchStage.carModels = { $regex: carModels, $options: 'i' };
+
+    if (lowestPrice || highestPrice) {
+      const priceFilter: any = {};
+      if (lowestPrice) priceFilter.$gte = Number(lowestPrice);
+      if (highestPrice) priceFilter.$lte = Number(highestPrice);
+      matchStage.price = priceFilter;
+    }
 
     if (searchTerm) {
       matchStage.$or = ['title', 'description', 'brand', 'category'].map(
@@ -292,10 +301,13 @@ const searchProductsFromDB = async (
       limit,
       sort: querySort,
       fields: queryFields,
+      lowestPrice,
+      highestPrice,
     },
   )
     .search(['title', 'description', 'brand', 'category'])
     .filter()
+    .priceRange()
     .sort()
     .paginate()
     .fields();

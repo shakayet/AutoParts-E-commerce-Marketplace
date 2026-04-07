@@ -52,6 +52,8 @@ const searchProductQueryZodSchema = z.object({
     userLat: z.string().optional(),
     userLng: z.string().optional(),
     radius: z.string().optional(),
+    lowestPrice: z.string().optional(),
+    highestPrice: z.string().optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
     sort: z.string().optional(),
