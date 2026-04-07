@@ -175,63 +175,130 @@ const searchProductsFromDB = async (
     userLat,
     userLng,
     radius,
+    page: queryPage,
+    limit: queryLimit,
+    sort: querySort,
+    fields: queryFields,
     ...restFilters
   } = query;
 
-  const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
+  const page = Number(queryPage) || 1;
+  const limit = Number(queryLimit) || 10;
+  const skip = (page - 1) * limit;
 
-  // Prioritize proximity if user location is provided
+  // If proximity search is requested
   if (userLat && userLng) {
-    baseQuery.coordinates = {
-      $nearSphere: {
-        $geometry: {
+    const pipeline: any[] = [];
+
+    // Stage 1: $geoNear for distance-based sorting (must be first)
+    pipeline.push({
+      $geoNear: {
+        near: {
           type: 'Point',
           coordinates: [
             parseFloat(userLng as string),
             parseFloat(userLat as string),
           ],
         },
-        ...(radius && {
-          $maxDistance: parseFloat(radius as string) * 1000,
+        distanceField: 'distance',
+        spherical: true,
+        ...(radius ? { maxDistance: parseFloat(radius as string) * 1000 } : {}),
+        query: { isBlocked: false },
+      },
+    });
+
+    // Stage 2: Filtering and Searching
+    const matchStage: Record<string, any> = { ...restFilters };
+    if (category) matchStage.category = { $regex: category, $options: 'i' };
+    if (title) matchStage.title = { $regex: title, $options: 'i' };
+    if (brand) matchStage.brand = { $regex: brand, $options: 'i' };
+    if (carModels) matchStage.carModels = { $regex: carModels, $options: 'i' };
+
+    if (searchTerm) {
+      matchStage.$or = ['title', 'description', 'brand', 'category'].map(
+        field => ({
+          [field]: { $regex: searchTerm, $options: 'i' },
         }),
+      );
+    }
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    // Clone pipeline for count before pagination
+    const countPipeline = [...pipeline, { $count: 'total' }];
+
+    // Stage 3: Pagination
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
+
+    // Stage 4: Projection (fields)
+    if (queryFields) {
+      const projection: Record<string, number> = { distance: 1 };
+      (queryFields as string)
+        .split(',')
+        .forEach(f => (projection[f.trim()] = 1));
+      pipeline.push({ $project: projection });
+    } else {
+      // Ensure distance is included if no specific fields are requested
+      pipeline.push({ $addFields: { distance: '$distance' } });
+    }
+
+    // Execute aggregation and count
+    const [products, countResult] = await Promise.all([
+      Product.aggregate(pipeline),
+      Product.aggregate(countPipeline),
+    ]);
+
+    const totalCount = countResult.length > 0 ? countResult[0].total : 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Populate the results
+    const populatedProducts = await Product.populate(products, {
+      path: 'sellerId',
+      select: 'name whatsappNumber coordinates',
+    });
+
+    return {
+      data: populatedProducts as unknown as IProduct[],
+      meta: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages,
       },
     };
   }
 
-  // Initialize filters with any remaining query parameters
+  // Fallback to QueryBuilder for non-proximity search
+  const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
   const filters: Record<string, any> = { ...restFilters };
 
-  // Add case-insensitive partial matching for specified fields
-  if (category) {
-    filters.category = { $regex: category, $options: 'i' };
-  }
-  if (title) {
-    filters.title = { $regex: title, $options: 'i' };
-  }
-  if (brand) {
-    filters.brand = { $regex: brand, $options: 'i' };
-  }
-  if (carModels) {
-    filters.carModels = { $regex: carModels, $options: 'i' };
-  }
+  if (category) filters.category = { $regex: category, $options: 'i' };
+  if (title) filters.title = { $regex: title, $options: 'i' };
+  if (brand) filters.brand = { $regex: brand, $options: 'i' };
+  if (carModels) filters.carModels = { $regex: carModels, $options: 'i' };
 
-  // Use QueryBuilder for handling search, filtering, and pagination
   const queryBuilder = new QueryBuilder(
     Product.find(baseQuery).populate(
       'sellerId',
       'name whatsappNumber coordinates',
     ),
-    { ...filters, searchTerm },
+    {
+      ...filters,
+      searchTerm,
+      page,
+      limit,
+      sort: querySort,
+      fields: queryFields,
+    },
   )
     .search(['title', 'description', 'brand', 'category'])
-    .filter();
-
-  // Only apply default sorting if proximity sorting is not active
-  if (!(userLat && userLng)) {
-    queryBuilder.sort();
-  }
-
-  queryBuilder.paginate().fields();
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
 
   const [products, total] = await Promise.all([
     queryBuilder.modelQuery.exec(),
