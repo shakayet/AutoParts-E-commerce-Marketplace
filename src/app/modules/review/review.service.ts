@@ -110,8 +110,18 @@ const deleteReview = async (reviewId: string, userId: string) => {
   await Review.deleteOne({ _id: reviewId });
 };
 
+const getTopReviewsFromDB = async (): Promise<IReview[]> => {
+  const reviews = await Review.find({})
+    .populate('userId', 'name email image')
+    .populate('productId', 'title mainImage')
+    .sort({ rating: -1, createdAt: -1 })
+    .limit(15);
+  return reviews as IReview[];
+};
+
 export const ReviewService = {
   createReviewToDB,
   getReviewsForProduct,
   deleteReview,
+  getTopReviewsFromDB,
 };

@@ -55,7 +55,19 @@ const getReviews = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getTopReviews = catchAsync(async (req: Request, res: Response) => {
+  const result = await ReviewService.getTopReviewsFromDB();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Top reviews retrieved successfully',
+    data: result,
+  });
+});
+
 export const ReviewController = {
   createReview,
   getReviews,
+  getTopReviews,
 };
