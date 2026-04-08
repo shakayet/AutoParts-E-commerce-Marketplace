@@ -130,9 +130,8 @@ const baseTemplate = (title: string, bodyContent: string) => {
                 ${
                   logoUrl
                     ? `<img src="${logoUrl}" alt="${projectName} logo" class="logo" />`
-                    : ''
+                    : `<div class="brand-name">${projectName}</div>`
                 }
-                <div class="brand-name">${projectName}</div>
                 <div class="header-divider"></div>
               </td>
             </tr>
