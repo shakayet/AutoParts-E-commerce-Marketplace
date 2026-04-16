@@ -6,12 +6,12 @@ import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+import crypto from 'crypto';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
@@ -42,7 +42,7 @@ class StorageService {
       contentType = 'audio/mpeg';
     }
 
-    const key = `uploads/${uuidv4()}${
+    const key = `uploads/${crypto.randomUUID()}${
       ext === '.jpg' || ext === '.jpeg' || ext === '.png' ? '.webp' : ext
     }`;
 
