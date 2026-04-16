@@ -12,7 +12,7 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 // uuid package is published as ESM; use require to avoid jest transform issues
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
