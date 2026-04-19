@@ -1,69 +1,14 @@
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request } from 'express';
-import fs from 'fs';
 import { StatusCodes } from 'http-status-codes';
 import multer, { FileFilterCallback } from 'multer';
-import path from 'path';
 import ApiError from '../../errors/ApiError';
-import process from 'process';
 
 const fileUploadHandler = () => {
-  //create upload folder
-  const baseUploadDir = path.join(process.cwd(), 'uploads');
-  if (!fs.existsSync(baseUploadDir)) {
-    fs.mkdirSync(baseUploadDir);
-  }
-
-  //folder create for different file
-  const createDir = (dirPath: string) => {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath);
-    }
-  };
-
-  //create filename
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      let uploadDir;
-      switch (file.fieldname) {
-        case 'image':
-          uploadDir = path.join(baseUploadDir, 'image');
-          break;
-        case 'icon':
-          uploadDir = path.join(baseUploadDir, 'image');
-          break;
-        case 'mainImage':
-          uploadDir = path.join(baseUploadDir, 'image');
-          break;
-        case 'galleryImages':
-          uploadDir = path.join(baseUploadDir, 'image');
-          break;
-        case 'media':
-          uploadDir = path.join(baseUploadDir, 'media');
-          break;
-        case 'doc':
-          uploadDir = path.join(baseUploadDir, 'doc');
-          break;
-        default:
-          throw new ApiError(StatusCodes.BAD_REQUEST, 'File is not supported');
-      }
-      createDir(uploadDir);
-      cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-      const fileExt = path.extname(file.originalname);
-      const fileName =
-        file.originalname
-          .replace(fileExt, '')
-          .toLowerCase()
-          .split(' ')
-          .join('-') +
-        '-' +
-        Date.now();
-      cb(null, fileName + fileExt);
-    },
-  });
+  // Use memory storage — files stay in RAM as buffers,
+  // no disk I/O needed before uploading to S3.
+  const storage = multer.memoryStorage();
 
   type MulterFile = {
     fieldname: string;
@@ -123,6 +68,9 @@ const fileUploadHandler = () => {
   const upload = multer({
     storage: storage,
     fileFilter: filterFilter,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10 MB per file
+    },
   }).fields([
     { name: 'image', maxCount: 6 },
     { name: 'icon', maxCount: 1 },
@@ -132,10 +80,8 @@ const fileUploadHandler = () => {
     { name: 'doc', maxCount: 3 },
   ]);
 
-  // wrap multer middleware in a function that will process files after
-  // they have been written to disk.  The processing step uploads every
-  // file to S3 (optimising images) and attaches a `url` field so that
-  // downstream handlers can remain unaware of the storage details.
+  // Wrap multer middleware: after files are parsed into memory buffers,
+  // upload ALL files to S3 in parallel using Promise.all().
   const wrapped = (req: any, res: any, next: any) => {
     upload(req, res, async (err: any) => {
       if (err) {
@@ -146,22 +92,39 @@ const fileUploadHandler = () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const StorageService = require('../services/storage.service').default;
         const files = req.files as Record<string, Express.Multer.File[]>;
+
+        // Collect all upload promises across all fields
+        const uploadPromises: Promise<void>[] = [];
+
         for (const field of Object.keys(files)) {
           const arr = files[field];
           if (!arr) continue;
           for (const file of arr) {
-            try {
-              // multer.diskStorage attaches a `path` property
-              const localPath = (file as any).path;
-              if (localPath) {
-                const url = await StorageService.uploadLocalFile(localPath);
-                (file as any).url = url;
-              }
-            } catch (uploadErr) {
-              // if uploading fails we propagate the error
-              return next(uploadErr);
-            }
+            uploadPromises.push(
+              (async () => {
+                try {
+                  // memoryStorage attaches a `buffer` property
+                  const buffer = (file as any).buffer as Buffer;
+                  if (buffer) {
+                    const url = await StorageService.uploadBuffer(
+                      buffer,
+                      file.originalname,
+                    );
+                    (file as any).url = url;
+                  }
+                } catch (uploadErr) {
+                  throw uploadErr;
+                }
+              })(),
+            );
           }
+        }
+
+        try {
+          // Upload all files in parallel
+          await Promise.all(uploadPromises);
+        } catch (uploadErr) {
+          return next(uploadErr);
         }
       }
 
