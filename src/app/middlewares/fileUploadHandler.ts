@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request } from 'express';
@@ -32,14 +33,17 @@ const fileUploadHandler = () => {
       if (
         file.mimetype === 'image/jpeg' ||
         file.mimetype === 'image/png' ||
-        file.mimetype === 'image/jpg'
+        file.mimetype === 'image/jpg' ||
+        file.mimetype === 'image/heic' ||
+        file.mimetype === 'image/heif' ||
+        file.mimetype === 'image/webp'
       ) {
         cb(null, true);
       } else {
         cb(
           new ApiError(
             StatusCodes.BAD_REQUEST,
-            'Only .jpeg, .png, .jpg file supported',
+            'Only .jpeg, .png, .jpg, .heic, .heif, .webp file supported',
           ),
         );
       }
