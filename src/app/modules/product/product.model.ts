@@ -10,7 +10,7 @@ const productSchema = new Schema<IProduct, ProductModel>(
     description: { type: String },
     carModels: [{ type: String }],
     chassisNumber: { type: String, index: true },
-    condition: { type: String, enum: ['new', 'used', 'refurbished'] },
+    condition: { type: String, enum: ['new', 'used', 'refurbished', 'newly imported'] },
     warranty: { type: String },
     price: { type: Number, required: true },
     discount: { type: Number, default: 0 },

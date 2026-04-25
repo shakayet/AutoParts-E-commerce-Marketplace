@@ -7,11 +7,11 @@ export type IProduct = {
   description?: string;
   carModels?: string[];
   chassisNumber?: string;
-  condition?: 'new' | 'used' | 'refurbished';
+  condition: 'new' | 'used' | 'refurbished' | 'newly imported';
   warranty?: string;
   price: number;
   discount?: number;
-  mainImage?: string;
+  mainImage: string;
   galleryImages?: string[];
   sellerId: string;
   coordinates?: { lat?: number; lng?: number };
