@@ -13,6 +13,7 @@ export type IProduct = {
   discount?: number;
   mainImage: string;
   galleryImages?: string[];
+  partsNumber?: string;
   sellerId: string;
   coordinates?: { lat?: number; lng?: number };
   averageRating?: number;

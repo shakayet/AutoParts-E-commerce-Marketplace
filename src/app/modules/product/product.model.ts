@@ -11,6 +11,7 @@ const productSchema = new Schema<IProduct, ProductModel>(
     carModels: [{ type: String }],
     chassisNumber: { type: String, index: true },
     condition: { type: String, enum: ['new', 'used', 'refurbished', 'newly imported'] },
+    partsNumber: { type: String },
     warranty: { type: String },
     price: { type: Number, required: true },
     discount: { type: Number, default: 0 },
