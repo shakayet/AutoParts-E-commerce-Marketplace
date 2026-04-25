@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express from 'express';
 import { CategoryRequestController } from './categoryRequest.controller';
@@ -5,6 +6,8 @@ import { CategoryRequestValidation } from './categoryRequest.validation';
 import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
+import fileUploadHandler from '../../middlewares/fileUploadHandler';
+import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const router = express.Router();
 
@@ -16,7 +19,19 @@ router
   )
   .post(
     auth(USER_ROLES.USER),
-    validateRequest(CategoryRequestValidation.createCategoryRequestZodSchema),
+    fileUploadHandler(),
+    (req, res, next) => {
+      if (req.body.data) {
+        req.body = { ...JSON.parse(req.body.data) };
+      }
+      const image = getSingleFilePath((req as any).files, 'image');
+      if (image) req.body.image = image;
+
+      CategoryRequestValidation.createCategoryRequestZodSchema.parse({
+        body: req.body,
+      });
+      next();
+    },
     CategoryRequestController.createCategoryRequest,
   );
 

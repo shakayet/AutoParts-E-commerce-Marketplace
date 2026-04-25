@@ -23,6 +23,7 @@ const createCategoryRequestToDB = async (
     const reqDoc = await CategoryRequest.create({
       requesterId,
       name: payload.name,
+      image: payload.image,
       description: payload.description,
     } as Partial<ICategoryRequest>);
     return reqDoc;
@@ -37,6 +38,7 @@ const createCategoryRequestToDB = async (
         const reqDoc = await CategoryRequest.create({
           requesterId,
           name: payload.name,
+          image: payload.image,
           description: payload.description,
         } as Partial<ICategoryRequest>);
         return reqDoc;
@@ -103,6 +105,7 @@ const reviewCategoryRequestToDB = async (
         $set: {
           name: req.name,
           description: req.description,
+          image: req.image || 'https://i.ibb.co/z5YHLV9/profile.png', // Fallback for required field
           slug,
         },
       },

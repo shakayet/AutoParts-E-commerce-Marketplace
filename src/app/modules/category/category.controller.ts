@@ -4,23 +4,9 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { CategoryService } from './category.service';
 import { StatusCodes } from 'http-status-codes';
-import { getSingleFilePath } from '../../../shared/getFilePath';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
-  let image = getSingleFilePath((req as any).files, 'image');
-  if (!image) {
-    image = getSingleFilePath((req as any).files, 'icon');
-  }
-
-  const payload: any = {
-    ...req.body,
-    // only override if we actually found an image file; avoid wiping
-    // an existing value that might have been set by upstream middleware
-    ...(image ? { image } : {}),
-    ...(image ? { icon: image } : {}),
-  };
-
-  const result = await CategoryService.createCategoryToDB(payload);
+  const result = await CategoryService.createCategoryToDB(req.body);
 
   sendResponse(res, {
     success: true,
@@ -32,16 +18,8 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  let image = getSingleFilePath((req as any).files, 'image');
-  if (!image) {
-    image = getSingleFilePath((req as any).files, 'icon');
-  }
-  const payload = {
-    ...req.body,
-    ...(image ? { image } : {}),
-  };
 
-  const result = await CategoryService.updateCategoryToDB(id, payload);
+  const result = await CategoryService.updateCategoryToDB(id, req.body);
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

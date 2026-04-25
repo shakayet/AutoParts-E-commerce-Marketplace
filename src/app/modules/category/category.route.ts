@@ -26,10 +26,18 @@ router
         };
       }
 
+      const imagePath = getSingleFilePath((req as any).files, 'image');
+      if (imagePath) {
+        req.body.image = imagePath;
+      }
+
       const iconPath = getSingleFilePath((req as any).files, 'icon');
       if (iconPath) {
         req.body.icon = iconPath;
       }
+
+      // Validate after merging file paths into body
+      CategoryValidation.createCategoryZodSchema.parse(req.body);
 
       return CategoryController.createCategory(req, res, next);
     },
@@ -43,16 +51,23 @@ router
     fileUploadHandler(),
     (req: Request, res: Response, next: NextFunction) => {
       if (req.body.data) {
-        req.body = CategoryValidation.updateCategoryZodSchema.parse(
-          JSON.parse(req.body.data),
-        );
+        req.body = {
+          ...JSON.parse(req.body.data),
+        };
       }
 
       const imagePath = getSingleFilePath((req as any).files, 'image');
       if (imagePath) {
         req.body.image = imagePath;
-        req.body.icon = imagePath;
       }
+
+      const iconPath = getSingleFilePath((req as any).files, 'icon');
+      if (iconPath) {
+        req.body.icon = iconPath;
+      }
+
+      // Validate after merging file paths into body
+      CategoryValidation.updateCategoryZodSchema.parse(req.body);
 
       return CategoryController.updateCategory(req, res, next);
     },

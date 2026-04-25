@@ -6,6 +6,7 @@ const categoryRequestSchema = new Schema<ICategoryRequest>(
   {
     requesterId: { type: (Schema.Types.ObjectId as any), ref: 'User', required: true },
     name: { type: String, required: true },
+    image: { type: String },
     description: { type: String },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   },

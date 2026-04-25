@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const createCategoryZodSchema = z.object({
   name: z.string({ required_error: 'Name is required' }),
   slug: z.string().optional(), // optional if you plan to generate from name
+  image: z.string({ required_error: 'Image is required' }),
+  icon: z.string().optional(),
 
   description: z.string().optional(),
 });
@@ -10,6 +12,8 @@ export const createCategoryZodSchema = z.object({
 const updateCategoryZodSchema = z.object({
   name: z.string().optional(),
   slug: z.string().optional(), // optional if you plan to generate from name
+  image: z.string().optional(),
+  icon: z.string().optional(),
 
   description: z.string().optional(),
 });

@@ -12,6 +12,7 @@ const createCategoryRequest = catchAsync(
       (user as any)?.id || (user as any)?._id || (user as any)?.userId;
     const payload = {
       name: req.body.name,
+      image: req.body.image,
       description: req.body.description,
     };
 
