@@ -6,6 +6,8 @@ export type IProduct = {
   brand?: string;
   description?: string;
   carModels?: string[];
+  model?: string;
+  year?: number;
   chassisNumber?: string;
   condition: 'new' | 'used' | 'refurbished' | 'newly imported';
   warranty?: string;

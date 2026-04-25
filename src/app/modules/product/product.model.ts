@@ -14,6 +14,8 @@ const productSchema = new Schema<IProduct, ProductModel>(
     partsNumber: { type: String },
     warranty: { type: String },
     price: { type: Number, required: true },
+    model: { type: String },
+    year: { type: Number },
     discount: { type: Number, default: 0 },
     mainImage: { type: String },
     galleryImages: [{ type: String }],
