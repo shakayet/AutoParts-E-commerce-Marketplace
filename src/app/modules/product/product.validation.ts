@@ -7,7 +7,7 @@ const createProductZodSchema = z.object({
   description: z.string().optional(),
   carModels: z.array(z.string()).optional(),
   chassisNumber: z.string().optional(),
-  condition: z.enum(['new', 'used', 'refurbished']).optional(),
+  condition: z.enum(['new', 'used', 'refurbished', 'newly imported']).optional(),
   warranty: z.string().optional(),
   price: z.number({ required_error: 'Price is required' }),
   discount: z.number().optional(),
