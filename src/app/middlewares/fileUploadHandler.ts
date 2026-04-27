@@ -24,6 +24,7 @@ const fileUploadHandler = () => {
     file: MulterFile,
     cb: FileFilterCallback,
   ) => {
+    const mimetype = file.mimetype.toLowerCase();
     if (
       file.fieldname === 'image' ||
       file.fieldname === 'icon' ||
@@ -31,12 +32,12 @@ const fileUploadHandler = () => {
       file.fieldname === 'galleryImages'
     ) {
       if (
-        file.mimetype === 'image/jpeg' ||
-        file.mimetype === 'image/png' ||
-        file.mimetype === 'image/jpg' ||
-        file.mimetype === 'image/heic' ||
-        file.mimetype === 'image/heif' ||
-        file.mimetype === 'image/webp'
+        mimetype === 'image/jpeg' ||
+        mimetype === 'image/png' ||
+        mimetype === 'image/jpg' ||
+        mimetype === 'image/heic' ||
+        mimetype === 'image/heif' ||
+        mimetype === 'image/webp'
       ) {
         cb(null, true);
       } else {
@@ -48,7 +49,7 @@ const fileUploadHandler = () => {
         );
       }
     } else if (file.fieldname === 'media') {
-      if (file.mimetype === 'video/mp4' || file.mimetype === 'audio/mpeg') {
+      if (mimetype === 'video/mp4' || mimetype === 'audio/mpeg') {
         cb(null, true);
       } else {
         cb(
@@ -59,7 +60,7 @@ const fileUploadHandler = () => {
         );
       }
     } else if (file.fieldname === 'doc') {
-      if (file.mimetype === 'application/pdf') {
+      if (mimetype === 'application/pdf') {
         cb(null, true);
       } else {
         cb(new ApiError(StatusCodes.BAD_REQUEST, 'Only pdf supported'));

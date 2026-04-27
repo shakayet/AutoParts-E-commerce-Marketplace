@@ -28,9 +28,11 @@ class StorageService {
     let uploadBuffer: Buffer = buffer;
     let contentType = 'application/octet-stream';
 
-    if (
-      ['.jpg', '.jpeg', '.png', '.heic', '.heif'].includes(ext)
-    ) {
+    const isConvertibleImage = ['.jpg', '.jpeg', '.png', '.heic', '.heif'].includes(
+      ext,
+    );
+
+    if (isConvertibleImage) {
       uploadBuffer = await sharp(buffer)
         .resize({ width: 1024, withoutEnlargement: true })
         .toFormat('webp')
@@ -50,7 +52,7 @@ class StorageService {
     }
 
     const key = `uploads/${crypto.randomUUID()}${
-      ['.jpg', '.jpeg', '.png', '.heic', '.heif'].includes(ext) ? '.webp' : ext
+      isConvertibleImage ? '.webp' : ext
     }`;
 
     await s3.send(
