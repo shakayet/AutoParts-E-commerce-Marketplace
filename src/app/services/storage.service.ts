@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -7,6 +9,10 @@ import { promises as fsp } from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import crypto from 'crypto';
+import { StatusCodes } from 'http-status-codes';
+import ApiError from '../../errors/ApiError';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const heicConvert = require('heic-convert');
 import {
   S3Client,
   PutObjectCommand,
@@ -28,18 +34,37 @@ class StorageService {
     let uploadBuffer: Buffer = buffer;
     let contentType = 'application/octet-stream';
 
-    const isConvertibleImage = ['.jpg', '.jpeg', '.png', '.heic', '.heif'].includes(
-      ext,
-    );
+    const isHeic = ext === '.heic' || ext === '.heif';
+    const isConvertibleImage =
+      ['.jpg', '.jpeg', '.png'].includes(ext) || isHeic;
+
+    // Handle HEIC/HEIF conversion before sharp processing
+    // sharp often lacks built-in HEIF support on some environments
+    if (isHeic) {
+      try {
+        const converted = await heicConvert({
+          buffer: uploadBuffer,
+          format: 'JPEG',
+          quality: 1,
+        });
+        uploadBuffer = Buffer.from(converted);
+      } catch (error: any) {
+        console.error('HEIC conversion failed:', error);
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          `Failed to process HEIC image: ${error.message || 'Unknown error'}`,
+        );
+      }
+    }
 
     if (isConvertibleImage) {
-      uploadBuffer = await sharp(buffer)
+      uploadBuffer = await sharp(uploadBuffer)
         .resize({ width: 1024, withoutEnlargement: true })
         .toFormat('webp')
         .toBuffer();
       contentType = 'image/webp';
     } else if (ext === '.webp') {
-      uploadBuffer = await sharp(buffer)
+      uploadBuffer = await sharp(uploadBuffer)
         .resize({ width: 1024, withoutEnlargement: true })
         .toBuffer();
       contentType = 'image/webp';
