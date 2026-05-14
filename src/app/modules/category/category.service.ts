@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
