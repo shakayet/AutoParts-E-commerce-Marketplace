@@ -54,12 +54,11 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
 const updateProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  // 1. Extract files from the correct fields
   const files = req.files as any;
   const mainImageFiles = files?.mainImage || [];
   const newGalleryFiles = files?.galleryImages || [];
 
-  // 2. Parse new URLs if files were uploaded
+  // Parse new URLs from uploaded files
   const newMainImage =
     mainImageFiles.length > 0
       ? mainImageFiles[0].url || `/${'image'}/${mainImageFiles[0].filename}`
@@ -69,24 +68,27 @@ const updateProduct = catchAsync(async (req: Request, res: Response) => {
     (f: any) => f.url || `/${'image'}/${f.filename}`,
   );
 
-  // 3. Extract the body (contains existing gallery URLs to keep)
+  // Extract body (Zod-validated)
   const body = req.body as Partial<IProduct>;
   const payload: Partial<IProduct> = { ...body };
 
-  // 4. Update mainImage if a new one was uploaded
+  // Update mainImage if a new file was uploaded
   if (newMainImage) {
     payload.mainImage = newMainImage;
   }
 
-  // 5. Merge existing gallery URLs with the newly uploaded ones
-  // body.galleryImages contains the URLs the user decided to KEEP
+  // Merge existing gallery URLs (to keep) with new uploads
   const existingGalleryUrls = Array.isArray(body.galleryImages)
     ? body.galleryImages
     : [];
 
-  // If there are new files OR we are explicitly modifying the gallery
-  if (newGalleryUrls.length > 0 || body.galleryImages) {
+  // Important: If new files exist, we must combine them with the ones kept from the body
+  if (newGalleryUrls.length > 0) {
     payload.galleryImages = [...existingGalleryUrls, ...newGalleryUrls];
+  }
+  // If no new files, but the body has a gallery array, use it (handles removals)
+  else if (body.galleryImages) {
+    payload.galleryImages = existingGalleryUrls;
   }
 
   const result = await ProductService.updateProductToDB(id, payload);

@@ -11,6 +11,8 @@ const createProductZodSchema = z.object({
   warranty: z.string().optional(),
   price: z.number({ required_error: 'Price is required' }),
   discount: z.number().optional(),
+  mainImage: z.string().optional(),
+  galleryImages: z.array(z.string()).optional(),
 });
 
 const updateProductZodSchema = z.object({
