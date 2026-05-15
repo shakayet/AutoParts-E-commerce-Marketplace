@@ -53,24 +53,41 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
 
 const updateProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const files = req.files as
-    | Record<string, MulterFile[] | undefined>
-    | undefined;
-  const images = (files?.image ?? []) as any[];
 
-  const mainImage =
-    images.length > 0
-      ? images[0].url || `/${'image'}/${images[0].filename}`
-      : undefined;
-  const galleryImages =
-    images.length > 1
-      ? images.slice(1, 6).map((f: any) => f.url || `/${'image'}/${f.filename}`)
+  // 1. Extract files from the correct fields
+  const files = req.files as any;
+  const mainImageFiles = files?.mainImage || [];
+  const newGalleryFiles = files?.galleryImages || [];
+
+  // 2. Parse new URLs if files were uploaded
+  const newMainImage =
+    mainImageFiles.length > 0
+      ? mainImageFiles[0].url || `/${'image'}/${mainImageFiles[0].filename}`
       : undefined;
 
+  const newGalleryUrls = newGalleryFiles.map(
+    (f: any) => f.url || `/${'image'}/${f.filename}`,
+  );
+
+  // 3. Extract the body (contains existing gallery URLs to keep)
   const body = req.body as Partial<IProduct>;
   const payload: Partial<IProduct> = { ...body };
-  if (mainImage) payload.mainImage = mainImage;
-  if (galleryImages) payload.galleryImages = galleryImages;
+
+  // 4. Update mainImage if a new one was uploaded
+  if (newMainImage) {
+    payload.mainImage = newMainImage;
+  }
+
+  // 5. Merge existing gallery URLs with the newly uploaded ones
+  // body.galleryImages contains the URLs the user decided to KEEP
+  const existingGalleryUrls = Array.isArray(body.galleryImages)
+    ? body.galleryImages
+    : [];
+
+  // If there are new files OR we are explicitly modifying the gallery
+  if (newGalleryUrls.length > 0 || body.galleryImages) {
+    payload.galleryImages = [...existingGalleryUrls, ...newGalleryUrls];
+  }
 
   const result = await ProductService.updateProductToDB(id, payload);
 
