@@ -10,6 +10,11 @@ import generateOTP from '../../../util/generateOTP';
 import { IUser } from './user.interface';
 import { User } from './user.model';
 import QueryBuilder from '../../builder/QueryBuilder';
+import { Product } from '../product/product.model';
+import { Review } from '../review/review.model';
+import { Wishlist } from '../wishList/wishlist.model';
+import { Notification } from '../notification/notification.model';
+import { Report } from '../report/report.model';
 
 type PaginatedResult<T> = {
   data: T[];
@@ -168,6 +173,60 @@ const deleteUserFromDB = async (userId: string): Promise<void> => {
   }
 };
 
+const deleteAccountToDB = async (
+  user: JwtPayload,
+  password: string,
+): Promise<void> => {
+  const { id } = user;
+  const isExistUser = await User.isExistUserById(id);
+  if (!isExistUser) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  // Verify password
+  const isMatch = await User.isMatchPassword(password, isExistUser.password);
+  if (!isMatch) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Password is incorrect');
+  }
+
+  // Delete all user's products and their images
+  const products = await Product.find({ sellerId: id });
+  for (const product of products) {
+    if (product.mainImage) {
+      await StorageService.deleteByUrl(product.mainImage);
+    }
+    if (product.galleryImages && product.galleryImages.length > 0) {
+      for (const image of product.galleryImages) {
+        await StorageService.deleteByUrl(image);
+      }
+    }
+  }
+  await Product.deleteMany({ sellerId: id });
+
+  // Delete all user's reviews
+  await Review.deleteMany({ userId: id });
+
+  // Delete all user's wishlist items
+  await Wishlist.deleteMany({ userId: id });
+
+  // Delete all user's notifications
+  await Notification.deleteMany({ user: id });
+
+  // Delete all user's reports
+  await Report.deleteMany({ reporterId: id });
+
+  // Delete user's profile image if it's not the default
+  if (
+    isExistUser.image &&
+    isExistUser.image !== 'https://i.ibb.co/z5YHLV9/profile.png'
+  ) {
+    await StorageService.deleteByUrl(isExistUser.image);
+  }
+
+  // Delete the user
+  await User.findByIdAndDelete(id);
+};
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -177,4 +236,5 @@ export const UserService = {
   changePasswordToDB,
   blockUnblockUserToDB,
   deleteUserFromDB,
+  deleteAccountToDB,
 };

@@ -137,6 +137,19 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteAccount = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const { password } = req.body;
+
+  await UserService.deleteAccountToDB(user, password);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Account deleted successfully',
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -146,4 +159,5 @@ export const UserController = {
   changePassword,
   blockUnblockUser,
   deleteUser,
+  deleteAccount,
 };

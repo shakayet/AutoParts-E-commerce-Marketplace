@@ -33,9 +33,16 @@ const blockUnblockZodSchema = z.object({
   }),
 });
 
+const deleteAccountZodSchema = z.object({
+  body: z.object({
+    password: z.string({ required_error: 'Password is required' }),
+  }),
+});
+
 export const UserValidation = {
   createUserZodSchema,
   updateUserZodSchema,
   changePasswordZodSchema,
   blockUnblockZodSchema,
+  deleteAccountZodSchema,
 };

@@ -67,4 +67,12 @@ router
     UserController.blockUnblockUser,
   );
 
+router
+  .route('/delete-account')
+  .delete(
+    auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    validateRequest(UserValidation.deleteAccountZodSchema),
+    UserController.deleteAccount,
+  );
+
 export const UserRoutes = router;
