@@ -2,6 +2,7 @@ import cors from 'cors';
 import express, { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
+import rateLimiter from './app/middlewares/rateLimiter';
 import router from './routes';
 import { Morgan } from './shared/morgen';
 const app = express();
@@ -9,6 +10,9 @@ const app = express();
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
+
+// Apply rate limiter to all requests
+app.use(rateLimiter);
 
 //body parser
 app.use(cors());
