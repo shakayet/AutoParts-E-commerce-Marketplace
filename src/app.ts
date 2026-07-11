@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express, { Request, Response } from 'express';
+import helmet from 'helmet';
 import { StatusCodes } from 'http-status-codes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import rateLimiter from './app/middlewares/rateLimiter';
@@ -10,6 +11,9 @@ const app = express();
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
+
+// Helmet for security headers
+app.use(helmet());
 
 // Apply rate limiter to all requests
 app.use(rateLimiter);
