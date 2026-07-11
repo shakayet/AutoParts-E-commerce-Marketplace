@@ -1,6 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FilterQuery, Query } from 'mongoose';
 
+/**
+ * Sanitize query object to remove MongoDB operators ($gt, $ne, etc.)
+ */
+const sanitizeQuery = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeQuery);
+  }
+
+  const sanitized: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (!key.startsWith('$')) {
+        sanitized[key] = sanitizeQuery(obj[key]);
+      }
+    }
+  }
+  return sanitized;
+};
+
 class QueryBuilder<T> {
   public modelQuery: Query<T[], T>;
   public query: Record<string, unknown>;
@@ -27,9 +50,20 @@ class QueryBuilder<T> {
 
   filter() {
     const queryObj = { ...this.query };
-    const excludeFields = ['searchTerm', 'sort', 'limit', 'page', 'fields', 'lowestPrice', 'highestPrice'];
+    const excludeFields = [
+      'searchTerm',
+      'sort',
+      'limit',
+      'page',
+      'fields',
+      'lowestPrice',
+      'highestPrice',
+    ];
     excludeFields.forEach(el => delete queryObj[el]);
-    this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
+
+    // Sanitize to prevent NoSQL injection
+    const sanitizedQuery = sanitizeQuery(queryObj);
+    this.modelQuery = this.modelQuery.find(sanitizedQuery as FilterQuery<T>);
     return this;
   }
 
