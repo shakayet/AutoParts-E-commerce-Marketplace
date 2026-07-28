@@ -83,7 +83,7 @@ const getReportsFromDB = async (
 
 const updateReportStatusToDB = async (
   id: string,
-  status: 'pending' | 'reviewed' | 'dismissed',
+  status: 'pending' | 'reviewed' | 'dismissed' | 'resolved',
 ) => {
   const report = await Report.findById(id);
   if (!report) throw new Error('Report not found');

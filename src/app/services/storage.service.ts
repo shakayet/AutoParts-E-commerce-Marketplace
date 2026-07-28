@@ -11,6 +11,7 @@ import sharp from 'sharp';
 import crypto from 'crypto';
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../../errors/ApiError';
+import config from '../../config';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const heicConvert = require('heic-convert');
 import {
@@ -19,7 +20,27 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+const createS3Client = (): S3Client => {
+  return new S3Client({
+    region: config.aws.region,
+    credentials:
+      config.aws.accessKeyId && config.aws.secretAccessKey
+        ? {
+            accessKeyId: config.aws.accessKeyId,
+            secretAccessKey: config.aws.secretAccessKey,
+          }
+        : undefined,
+  });
+};
+
+let s3Client: S3Client | null = null;
+
+const getS3Client = (): S3Client => {
+  if (!s3Client) {
+    s3Client = createS3Client();
+  }
+  return s3Client;
+};
 
 class StorageService {
   /**
@@ -80,16 +101,17 @@ class StorageService {
       isConvertibleImage ? '.webp' : ext
     }`;
 
+    const s3 = getS3Client();
     await s3.send(
       new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET!,
+        Bucket: config.aws.bucket!,
         Key: key,
         Body: uploadBuffer,
         ContentType: contentType,
       }),
     );
 
-    const domain = process.env.CLOUDFRONT_DOMAIN || '';
+    const domain = config.aws.cloudFrontDomain || '';
     return `${domain.replace(/\/+$/g, '')}/${key}`;
   }
 
@@ -114,7 +136,7 @@ class StorageService {
   static async deleteByUrl(url: string): Promise<void> {
     if (!url) return;
 
-    const domain = process.env.CLOUDFRONT_DOMAIN || '';
+    const domain = config.aws.cloudFrontDomain || '';
     let key = url;
 
     if (domain && url.includes(domain)) {
@@ -124,9 +146,10 @@ class StorageService {
     key = key.replace(/^\//, '');
     if (!key) return;
 
+    const s3 = getS3Client();
     await s3.send(
       new DeleteObjectCommand({
-        Bucket: process.env.AWS_BUCKET!,
+        Bucket: config.aws.bucket!,
         Key: key,
       }),
     );

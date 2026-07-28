@@ -39,7 +39,7 @@ const createUserToDB = async (
     email: createUser.email!,
   };
   const createAccountTemplate = emailTemplate.createAccount(values);
-  emailHelper.sendEmail(createAccountTemplate);
+  await emailHelper.sendEmail(createAccountTemplate);
 
   //save to DB
   const authentication = {

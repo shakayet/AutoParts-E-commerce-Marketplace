@@ -84,7 +84,7 @@ const forgetPasswordToDB = async (email: string) => {
     email: isExistUser.email,
   };
   const forgetPassword = emailTemplate.resetPassword(value);
-  emailHelper.sendEmail(forgetPassword);
+  await emailHelper.sendEmail(forgetPassword);
 
   //save to DB
   const authentication = {
@@ -390,7 +390,7 @@ const resendOtpToDB = async (email: string) => {
   };
 
   const resendTemplate = emailTemplate.createAccount(values);
-  emailHelper.sendEmail(resendTemplate);
+  await emailHelper.sendEmail(resendTemplate);
 
   //save otp to DB
   auth.oneTimeCode = otp;

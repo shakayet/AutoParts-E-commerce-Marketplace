@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace/branch/main/graph/badge.svg)](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace)
 
-This is a template project for backend development using Typescript, Node.js, Express, Mongoose, Bcrypt, JWT, NodeMailer, Multer, ESLint, and Prettier. The aim is to reduce setup time for new backend projects.
+This is a template project for backend development using Typescript, Node.js, Express, Mongoose, Bcrypt, JWT, AWS SES, Multer, ESLint, and Prettier. The aim is to reduce setup time for new backend projects.
 
 ## Features
 
@@ -11,7 +11,7 @@ This is a template project for backend development using Typescript, Node.js, Ex
 - **Unified Image Pipeline:** All uploaded images are preprocessed (resized/compressed/converted) via a dedicated `StorageService` before being pushed to AWS S3, and CloudFront is used for delivery. Lifecycle management ensures that replaced or deleted assets are cleaned up from the bucket automatically.
 - **Data Validation:** Robust data validation using Zod and Mongoose schemas.
 - **Code Quality:** Ensured code readability and quality with ESLint and Prettier.
-- **Email Service:** Sending emails through NodeMailer.
+- **Email Service:** Transactional emails (OTP, password reset, notifications) sent through AWS SES v3 SDK with exponential-backoff retries, logging, and HTML+plain text multipart content.
 - **File Handling:** Efficient file deletion using `fs.unlink`.
 - **Environment Configuration:** Easy configuration using a `.env` file.
 - **Logging:** Logging with Winston and file rotation using DailyRotateFile.
@@ -25,7 +25,7 @@ This is a template project for backend development using Typescript, Node.js, Ex
 - Mongoose
 - Bcrypt
 - JWT
-- NodeMailer
+- AWS SES (email delivery) + AWS S3 (file storage) via @aws-sdk v3
 - Multer
 - ESLint
 - Prettier
@@ -86,12 +86,15 @@ Ensure you have the following installed:
    JWT_SECRET=jwt_secret
    JWT_EXPIRE_IN=1d
 
-   # Email
-   EMAIL_FROM=email@gmail.com
-   EMAIL_USER=email@gmail.com
-   EMAIL_PASS=mkqcfjeqloothyax x
-   EMAIL_PORT=587
-   EMAIL_HOST=smtp.gmail.com
+   # Email (AWS SES - sender address/domain must be verified in SES)
+   EMAIL_FROM=noreply@yourdomain.com
+   EMAIL_FROM_NAME="Your Brand Name"
+
+   # AWS credentials (used by both SES for email and S3 for file storage)
+   AWS_REGION=us-east-1
+   AWS_ACCESS_KEY_ID=your-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-secret-access-key
+   AWS_BUCKET=your-s3-bucket-name
    ```
 
 4. **Run the project:**

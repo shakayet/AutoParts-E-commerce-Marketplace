@@ -19,10 +19,14 @@ export default {
   },
   email: {
     from: process.env.EMAIL_FROM,
-    user: process.env.EMAIL_USER,
-    port: process.env.EMAIL_PORT,
-    host: process.env.EMAIL_HOST,
-    pass: process.env.EMAIL_PASS,
+    fromName: process.env.EMAIL_FROM_NAME || 'Jbay',
+  },
+  aws: {
+    region: process.env.AWS_REGION || 'us-east-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    bucket: process.env.AWS_BUCKET,
+    cloudFrontDomain: process.env.CLOUDFRONT_DOMAIN,
   },
   branding: {
     logoUrl: process.env.BRAND_LOGO_URL,
