@@ -18,3 +18,4 @@ const verifyToken = (token, secret) => {
     return jsonwebtoken_1.default.verify(token, secret);
 };
 exports.jwtHelper = { createToken, verifyToken };
+//# sourceMappingURL=jwtHelper.js.map

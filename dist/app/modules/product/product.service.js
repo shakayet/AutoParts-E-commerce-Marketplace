@@ -1,24 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -32,38 +12,40 @@ const product_model_1 = require("./product.model");
 const storage_service_1 = __importDefault(require("../../services/storage.service"));
 const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
 const user_model_1 = require("../user/user.model");
-const createProductToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const createProductToDB = async (payload) => {
     const sellerId = payload.sellerId;
     if (!sellerId) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Seller not specified');
     }
-    const seller = yield user_model_1.User.findById(sellerId);
+    const seller = await user_model_1.User.findById(sellerId);
     if (!seller) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Seller not found');
     }
-    const lat = (_a = seller.coordinates) === null || _a === void 0 ? void 0 : _a.lat;
-    const lng = (_b = seller.coordinates) === null || _b === void 0 ? void 0 : _b.lng;
+    const lat = seller.coordinates?.lat;
+    const lng = seller.coordinates?.lng;
     if (typeof lat !== 'number' || typeof lng !== 'number') {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Seller location is not set. Please update your profile location first');
     }
-    const doc = Object.assign(Object.assign({}, payload), { coordinates: {
+    const doc = {
+        ...payload,
+        coordinates: {
             type: 'Point',
             coordinates: [lng, lat],
-        } });
-    const product = yield product_model_1.Product.create(doc);
+        },
+    };
+    const product = await product_model_1.Product.create(doc);
     if (!product)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Failed to create product');
     return product;
-});
-const updateProductToDB = (id, payload) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const updateProductToDB = async (id, payload) => {
     // if the payload contains new images we should clean up the old ones
-    const existing = yield product_model_1.Product.findById(id);
+    const existing = await product_model_1.Product.findById(id);
     if (!existing) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Product not found');
     }
     if (payload.mainImage && existing.mainImage) {
-        yield storage_service_1.default.deleteByUrl(existing.mainImage);
+        await storage_service_1.default.deleteByUrl(existing.mainImage);
     }
     if (payload.galleryImages && Array.isArray(payload.galleryImages)) {
         const newGallery = payload.galleryImages;
@@ -71,46 +53,49 @@ const updateProductToDB = (id, payload) => __awaiter(void 0, void 0, void 0, fun
         // delete any old urls that are not present in the new set
         for (const oldUrl of oldGallery) {
             if (!newGallery.includes(oldUrl)) {
-                yield storage_service_1.default.deleteByUrl(oldUrl);
+                await storage_service_1.default.deleteByUrl(oldUrl);
             }
         }
     }
-    const product = yield product_model_1.Product.findByIdAndUpdate(id, payload, {
+    const product = await product_model_1.Product.findByIdAndUpdate(id, payload, {
         new: true,
     });
     if (!product)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Product not found');
     return product;
-});
-const deleteProductFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const res = yield product_model_1.Product.findByIdAndDelete(id);
+};
+const deleteProductFromDB = async (id) => {
+    const res = await product_model_1.Product.findByIdAndDelete(id);
     if (!res)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Product not found');
     // clean up any images stored for this product
     if (res.mainImage) {
-        yield storage_service_1.default.deleteByUrl(res.mainImage);
+        await storage_service_1.default.deleteByUrl(res.mainImage);
     }
     if (res.galleryImages && Array.isArray(res.galleryImages)) {
         for (const url of res.galleryImages) {
-            yield storage_service_1.default.deleteByUrl(url);
+            await storage_service_1.default.deleteByUrl(url);
         }
     }
-});
-const getProductByIdFromDB = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const product = yield product_model_1.Product.findById(id).populate('sellerId', 'name coordinates address whatsappNumber');
+};
+const getProductByIdFromDB = async (id) => {
+    const product = await product_model_1.Product.findById(id).populate('sellerId', 'name coordinates address whatsappNumber');
     if (!product)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Product not found');
     return product;
-});
-const getProductsFromDB = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (filters = {}) {
-    const { userLat, userLng, radius } = filters, restFilters = __rest(filters, ["userLat", "userLng", "radius"]);
+};
+const getProductsFromDB = async (filters = {}) => {
+    const { userLat, userLng, radius, ...restFilters } = filters;
     const baseQuery = { isBlocked: false };
     if (userLat && userLng) {
         baseQuery.coordinates = {
-            $nearSphere: Object.assign({ $geometry: {
+            $nearSphere: {
+                $geometry: {
                     type: 'Point',
                     coordinates: [parseFloat(userLng), parseFloat(userLat)],
-                } }, (radius && { $maxDistance: parseFloat(radius) * 1000 })),
+                },
+                ...(radius && { $maxDistance: parseFloat(radius) * 1000 }),
+            },
         };
     }
     delete restFilters.lat;
@@ -125,7 +110,7 @@ const getProductsFromDB = (...args_1) => __awaiter(void 0, [...args_1], void 0, 
         queryBuilder.sort();
     }
     queryBuilder.paginate().fields();
-    const [products, total] = yield Promise.all([
+    const [products, total] = await Promise.all([
         queryBuilder.modelQuery.exec(),
         queryBuilder.getPaginationInfo(),
     ]);
@@ -138,9 +123,9 @@ const getProductsFromDB = (...args_1) => __awaiter(void 0, [...args_1], void 0, 
             totalPages: total.totalPage,
         },
     };
-});
-const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { searchTerm, category, title, carModels, brand, userLat, userLng, radius, lowestPrice, highestPrice, page: queryPage, limit: queryLimit, sort: querySort, fields: queryFields } = query, restFilters = __rest(query, ["searchTerm", "category", "title", "carModels", "brand", "userLat", "userLng", "radius", "lowestPrice", "highestPrice", "page", "limit", "sort", "fields"]);
+};
+const searchProductsFromDB = async (query) => {
+    const { searchTerm, category, title, carModels, brand, userLat, userLng, radius, lowestPrice, highestPrice, page: queryPage, limit: queryLimit, sort: querySort, fields: queryFields, ...restFilters } = query;
     const page = Number(queryPage) || 1;
     const limit = Number(queryLimit) || 10;
     const skip = (page - 1) * limit;
@@ -149,16 +134,22 @@ const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, functi
         const pipeline = [];
         // Stage 1: $geoNear for distance-based sorting (must be first)
         pipeline.push({
-            $geoNear: Object.assign(Object.assign({ near: {
+            $geoNear: {
+                near: {
                     type: 'Point',
                     coordinates: [
                         parseFloat(userLng),
                         parseFloat(userLat),
                     ],
-                }, distanceField: 'distance', spherical: true }, (radius ? { maxDistance: parseFloat(radius) * 1000 } : {})), { query: { isBlocked: false } }),
+                },
+                distanceField: 'distance',
+                spherical: true,
+                ...(radius ? { maxDistance: parseFloat(radius) * 1000 } : {}),
+                query: { isBlocked: false },
+            },
         });
         // Stage 2: Filtering and Searching
-        const matchStage = Object.assign({}, restFilters);
+        const matchStage = { ...restFilters };
         if (category)
             matchStage.category = { $regex: category, $options: 'i' };
         if (title)
@@ -201,14 +192,14 @@ const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, functi
             pipeline.push({ $addFields: { distance: '$distance' } });
         }
         // Execute aggregation and count
-        const [products, countResult] = yield Promise.all([
+        const [products, countResult] = await Promise.all([
             product_model_1.Product.aggregate(pipeline),
             product_model_1.Product.aggregate(countPipeline),
         ]);
         const totalCount = countResult.length > 0 ? countResult[0].total : 0;
         const totalPages = Math.ceil(totalCount / limit);
         // Populate the results
-        const populatedProducts = yield product_model_1.Product.populate(products, {
+        const populatedProducts = await product_model_1.Product.populate(products, {
             path: 'sellerId',
             select: 'name whatsappNumber coordinates',
         });
@@ -224,7 +215,7 @@ const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, functi
     }
     // Fallback to QueryBuilder for non-proximity search
     const baseQuery = { isBlocked: false };
-    const filters = Object.assign({}, restFilters);
+    const filters = { ...restFilters };
     if (category)
         filters.category = { $regex: category, $options: 'i' };
     if (title)
@@ -233,17 +224,23 @@ const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, functi
         filters.brand = { $regex: brand, $options: 'i' };
     if (carModels)
         filters.carModels = { $regex: carModels, $options: 'i' };
-    const queryBuilder = new QueryBuilder_1.default(product_model_1.Product.find(baseQuery).populate('sellerId', 'name whatsappNumber coordinates'), Object.assign(Object.assign({}, filters), { searchTerm,
+    const queryBuilder = new QueryBuilder_1.default(product_model_1.Product.find(baseQuery).populate('sellerId', 'name whatsappNumber coordinates'), {
+        ...filters,
+        searchTerm,
         page,
-        limit, sort: querySort, fields: queryFields, lowestPrice,
-        highestPrice }))
+        limit,
+        sort: querySort,
+        fields: queryFields,
+        lowestPrice,
+        highestPrice,
+    })
         .search(['title', 'description', 'brand', 'category'])
         .filter()
         .priceRange()
         .sort()
         .paginate()
         .fields();
-    const [products, total] = yield Promise.all([
+    const [products, total] = await Promise.all([
         queryBuilder.modelQuery.exec(),
         queryBuilder.getPaginationInfo(),
     ]);
@@ -256,9 +253,9 @@ const searchProductsFromDB = (query) => __awaiter(void 0, void 0, void 0, functi
             totalPages: total.totalPage,
         },
     };
-});
-const getRelatedProducts = (productId_1, ...args_1) => __awaiter(void 0, [productId_1, ...args_1], void 0, function* (productId, filters = {}) {
-    const prod = yield product_model_1.Product.findById(productId);
+};
+const getRelatedProducts = async (productId, filters = {}) => {
+    const prod = await product_model_1.Product.findById(productId);
     if (!prod)
         return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
     const queryBuilder = new QueryBuilder_1.default(product_model_1.Product.find({
@@ -270,7 +267,7 @@ const getRelatedProducts = (productId_1, ...args_1) => __awaiter(void 0, [produc
         .sort()
         .paginate()
         .fields();
-    const [products, total] = yield Promise.all([
+    const [products, total] = await Promise.all([
         queryBuilder.modelQuery.exec(),
         queryBuilder.getPaginationInfo(),
     ]);
@@ -283,15 +280,15 @@ const getRelatedProducts = (productId_1, ...args_1) => __awaiter(void 0, [produc
             totalPages: total.totalPage,
         },
     };
-});
-const getMyProductsFromDB = (sellerId_1, ...args_1) => __awaiter(void 0, [sellerId_1, ...args_1], void 0, function* (sellerId, filters = {}) {
+};
+const getMyProductsFromDB = async (sellerId, filters = {}) => {
     const queryBuilder = new QueryBuilder_1.default(product_model_1.Product.find({ sellerId }).populate('sellerId', 'name whatsappNumber coordinates'), filters)
         .search(['title', 'description', 'brand', 'category'])
         .filter()
         .sort()
         .paginate()
         .fields();
-    const [products, total] = yield Promise.all([
+    const [products, total] = await Promise.all([
         queryBuilder.modelQuery.exec(),
         queryBuilder.getPaginationInfo(),
     ]);
@@ -304,7 +301,7 @@ const getMyProductsFromDB = (sellerId_1, ...args_1) => __awaiter(void 0, [seller
             totalPages: total.totalPage,
         },
     };
-});
+};
 exports.ProductService = {
     createProductToDB,
     updateProductToDB,
@@ -315,3 +312,4 @@ exports.ProductService = {
     getMyProductsFromDB,
     searchProductsFromDB,
 };
+//# sourceMappingURL=product.service.js.map

@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -30,9 +21,9 @@ const verificationToken_model_1 = require("../verificationToken/verificationToke
 const createRefreshToken = (userId) => {
     return jwtHelper_1.jwtHelper.createToken({ id: userId }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expire_in);
 };
-const loginUserFromDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+const loginUserFromDB = async (payload) => {
     const { email, password } = payload;
-    const isExistUser = yield user_model_1.User.findOne({ email }).select('+password');
+    const isExistUser = await user_model_1.User.findOne({ email }).select('+password');
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -46,16 +37,16 @@ const loginUserFromDB = (payload) => __awaiter(void 0, void 0, void 0, function*
     }
     //check match password
     if (password &&
-        !(yield user_model_1.User.isMatchPassword(password, isExistUser.password))) {
+        !(await user_model_1.User.isMatchPassword(password, isExistUser.password))) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Password is incorrect!');
     }
     const createToken = jwtHelper_1.jwtHelper.createToken({ id: isExistUser._id, role: isExistUser.role, email: isExistUser.email }, config_1.default.jwt.jwt_secret, config_1.default.jwt.jwt_expire_in);
     const refreshToken = createRefreshToken(String(isExistUser._id));
     return { createToken, refreshToken };
-});
+};
 //forget password
-const forgetPasswordToDB = (email) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExistUser = yield user_model_1.User.isExistUserByEmail(email);
+const forgetPasswordToDB = async (email) => {
+    const isExistUser = await user_model_1.User.isExistUserByEmail(email);
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -66,19 +57,18 @@ const forgetPasswordToDB = (email) => __awaiter(void 0, void 0, void 0, function
         email: isExistUser.email,
     };
     const forgetPassword = emailTemplate_1.emailTemplate.resetPassword(value);
-    emailHelper_1.emailHelper.sendEmail(forgetPassword);
+    await emailHelper_1.emailHelper.sendEmail(forgetPassword);
     //save to DB
     const authentication = {
         oneTimeCode: otp,
         expireAt: new Date(Date.now() + 3 * 60000),
     };
-    yield user_model_1.User.findOneAndUpdate({ email }, { $set: { authentication } });
-});
+    await user_model_1.User.findOneAndUpdate({ email }, { $set: { authentication } });
+};
 //verify email
-const verifyEmailToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+const verifyEmailToDB = async (payload) => {
     const { email, oneTimeCode } = payload;
-    const isExistUser = yield user_model_1.User.findOne({ email }).select('+authentication');
+    const isExistUser = await user_model_1.User.findOne({ email }).select('+authentication');
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -86,25 +76,25 @@ const verifyEmailToDB = (payload) => __awaiter(void 0, void 0, void 0, function*
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Please give the otp, check your email we send a code');
     }
     // Try verification token first (separate collection)
-    const verificationRecord = yield verificationToken_model_1.VerificationToken.findOne({
+    const verificationRecord = await verificationToken_model_1.VerificationToken.findOne({
         user: isExistUser._id,
         otp: oneTimeCode,
     });
     const MAX_VERIFY_ATTEMPTS = 5;
     if (!verificationRecord) {
         // fallback to user.authentication
-        if (((_a = isExistUser.authentication) === null || _a === void 0 ? void 0 : _a.oneTimeCode) !== oneTimeCode) {
+        if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
             // increment attempts on any existing verification token for the user
-            const anyToken = yield verificationToken_model_1.VerificationToken.findOne({
+            const anyToken = await verificationToken_model_1.VerificationToken.findOne({
                 user: isExistUser._id,
             });
             if (anyToken) {
                 anyToken.attempts = (anyToken.attempts || 0) + 1;
-                yield anyToken.save();
+                await anyToken.save();
                 if (anyToken.attempts >= MAX_VERIFY_ATTEMPTS) {
                     // remove tokens and clear authentication
-                    yield verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
-                    yield user_model_1.User.findByIdAndUpdate(isExistUser._id, {
+                    await verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
+                    await user_model_1.User.findByIdAndUpdate(isExistUser._id, {
                         $set: { authentication: { oneTimeCode: null, expireAt: null } },
                     });
                     throw new ApiError_1.default(http_status_codes_1.StatusCodes.TOO_MANY_REQUESTS, 'Too many verification attempts. Please request a new OTP.');
@@ -116,20 +106,20 @@ const verifyEmailToDB = (payload) => __awaiter(void 0, void 0, void 0, function*
     const date = new Date();
     const expireAt = verificationRecord
         ? verificationRecord.expireAt
-        : (_b = isExistUser.authentication) === null || _b === void 0 ? void 0 : _b.expireAt;
+        : isExistUser.authentication?.expireAt;
     if (!expireAt || date > expireAt) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Otp already expired, Please try again');
     }
     let message;
     let data;
     if (!isExistUser.verified) {
-        yield user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, { verified: true, authentication: { oneTimeCode: null, expireAt: null } });
+        await user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, { verified: true, authentication: { oneTimeCode: null, expireAt: null } });
         // remove verification token(s)
-        yield verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
+        await verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
         message = 'Email verify successfully';
     }
     else {
-        yield user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, {
+        await user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, {
             authentication: {
                 isResetPassword: true,
                 oneTimeCode: null,
@@ -138,38 +128,37 @@ const verifyEmailToDB = (payload) => __awaiter(void 0, void 0, void 0, function*
         });
         //create token ;
         const createToken = (0, cryptoToken_1.default)();
-        yield resetToken_model_1.ResetToken.create({
+        await resetToken_model_1.ResetToken.create({
             user: isExistUser._id,
             token: createToken,
             expireAt: new Date(Date.now() + 5 * 60000),
         });
         // remove any verification tokens to avoid reuse/confusion
-        yield verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
+        await verificationToken_model_1.VerificationToken.deleteMany({ user: isExistUser._id });
         message =
             'Verification Successful: Please securely store and utilize this code for reset password';
         data = createToken;
     }
     return { data, message };
-});
+};
 //forget password
-const resetPasswordToDB = (token, payload) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+const resetPasswordToDB = async (token, payload) => {
     const { newPassword, confirmPassword } = payload;
     if (!token) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Reset token is required');
     }
     //isExist token
-    const isExistToken = yield resetToken_model_1.ResetToken.isExistToken(token);
+    const isExistToken = await resetToken_model_1.ResetToken.isExistToken(token);
     if (!isExistToken) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'You are not authorized');
     }
     //user permission check
-    const isExistUser = yield user_model_1.User.findById(isExistToken.user).select('+authentication');
-    if (!((_a = isExistUser === null || isExistUser === void 0 ? void 0 : isExistUser.authentication) === null || _a === void 0 ? void 0 : _a.isResetPassword)) {
+    const isExistUser = await user_model_1.User.findById(isExistToken.user).select('+authentication');
+    if (!isExistUser?.authentication?.isResetPassword) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, "You don't have permission to change the password. Please click again to 'Forgot Password'");
     }
     //validity check
-    const isValid = yield resetToken_model_1.ResetToken.isExpireToken(token);
+    const isValid = await resetToken_model_1.ResetToken.isExpireToken(token);
     if (!isValid) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Token expired, Please click again to the forget password');
     }
@@ -177,28 +166,28 @@ const resetPasswordToDB = (token, payload) => __awaiter(void 0, void 0, void 0, 
     if (newPassword !== confirmPassword) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "New password and Confirm password doesn't match!");
     }
-    const hashPassword = yield bcrypt_1.default.hash(newPassword, Number(config_1.default.bcrypt_salt_rounds));
+    const hashPassword = await bcrypt_1.default.hash(newPassword, Number(config_1.default.bcrypt_salt_rounds));
     const updateData = {
         password: hashPassword,
         authentication: {
             isResetPassword: false,
         },
     };
-    yield user_model_1.User.findOneAndUpdate({ _id: isExistToken.user }, updateData, {
+    await user_model_1.User.findOneAndUpdate({ _id: isExistToken.user }, updateData, {
         new: true,
     });
     // remove the used reset token so it cannot be reused
-    yield resetToken_model_1.ResetToken.deleteMany({ token });
-});
-const changePasswordToDB = (user, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    await resetToken_model_1.ResetToken.deleteMany({ token });
+};
+const changePasswordToDB = async (user, payload) => {
     const { currentPassword, newPassword, confirmPassword } = payload;
-    const isExistUser = yield user_model_1.User.findById(user.id).select('+password');
+    const isExistUser = await user_model_1.User.findById(user.id).select('+password');
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
     //current password match
     if (currentPassword &&
-        !(yield user_model_1.User.isMatchPassword(currentPassword, isExistUser.password))) {
+        !(await user_model_1.User.isMatchPassword(currentPassword, isExistUser.password))) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Password is incorrect');
     }
     //newPassword and current password
@@ -210,13 +199,13 @@ const changePasswordToDB = (user, payload) => __awaiter(void 0, void 0, void 0, 
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Password and Confirm password doesn't matched");
     }
     //hash password
-    const hashPassword = yield bcrypt_1.default.hash(newPassword, Number(config_1.default.bcrypt_salt_rounds));
+    const hashPassword = await bcrypt_1.default.hash(newPassword, Number(config_1.default.bcrypt_salt_rounds));
     const updateData = {
         password: hashPassword,
     };
-    yield user_model_1.User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
-});
-const refreshTokenToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    await user_model_1.User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
+};
+const refreshTokenToDB = async (payload) => {
     const { refreshToken } = payload;
     if (!refreshToken) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Refresh token is required');
@@ -225,11 +214,11 @@ const refreshTokenToDB = (payload) => __awaiter(void 0, void 0, void 0, function
     try {
         decoded = jwtHelper_1.jwtHelper.verifyToken(refreshToken, config_1.default.jwt.refresh_secret);
     }
-    catch (_a) {
+    catch {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'Invalid refresh token');
     }
     const userId = decoded.id;
-    const user = yield user_model_1.User.findById(userId);
+    const user = await user_model_1.User.findById(userId);
     if (!user) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'User not found');
     }
@@ -239,8 +228,8 @@ const refreshTokenToDB = (payload) => __awaiter(void 0, void 0, void 0, function
     const createToken = jwtHelper_1.jwtHelper.createToken({ id: user._id, role: user.role, email: user.email }, config_1.default.jwt.jwt_secret, config_1.default.jwt.jwt_expire_in);
     const newRefreshToken = createRefreshToken(String(user._id));
     return { createToken, refreshToken: newRefreshToken };
-});
-const logoutFromDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const logoutFromDB = async (payload) => {
     const { refreshToken } = payload;
     if (!refreshToken) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Refresh token is required');
@@ -248,13 +237,13 @@ const logoutFromDB = (payload) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         jwtHelper_1.jwtHelper.verifyToken(refreshToken, config_1.default.jwt.refresh_secret);
     }
-    catch (_a) {
+    catch {
         // if token is invalid/expired, treat as already logged out
     }
-});
+};
 // resend otp
-const resendOtpToDB = (email) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExistUser = yield user_model_1.User.findOne({ email });
+const resendOtpToDB = async (email) => {
+    const isExistUser = await user_model_1.User.findOne({ email });
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -282,35 +271,35 @@ const resendOtpToDB = (email) => __awaiter(void 0, void 0, void 0, function* () 
         email: isExistUser.email,
     };
     const resendTemplate = emailTemplate_1.emailTemplate.createAccount(values);
-    emailHelper_1.emailHelper.sendEmail(resendTemplate);
+    await emailHelper_1.emailHelper.sendEmail(resendTemplate);
     //save otp to DB
     auth.oneTimeCode = otp;
     auth.expireAt = new Date(Date.now() + 3 * 60000);
     auth.lastResendAt = now;
     auth.resendCount = (auth.resendCount || 0) + 1;
-    yield user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, { $set: { authentication: auth } });
+    await user_model_1.User.findOneAndUpdate({ _id: isExistUser._id }, { $set: { authentication: auth } });
     // create verification token record
-    yield verificationToken_model_1.VerificationToken.create({
+    await verificationToken_model_1.VerificationToken.create({
         user: isExistUser._id,
         otp,
         expireAt: new Date(Date.now() + 3 * 60000),
         attempts: 0,
     });
     return { message: 'OTP resent successfully, please check your email' };
-});
+};
 // register user
-const registerUserFromDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+const registerUserFromDB = async (payload) => {
     // delegate to UserService to keep logic consistent
-    const result = yield user_service_1.UserService.createUserToDB(payload);
+    const result = await user_service_1.UserService.createUserToDB(payload);
     // create verification token record for OTP (mirror to spec)
     const otp = result.otp;
-    yield verificationToken_model_1.VerificationToken.create({
+    await verificationToken_model_1.VerificationToken.create({
         user: result.user._id,
         otp,
         expireAt: new Date(Date.now() + 3 * 60000),
     });
     return result.user;
-});
+};
 exports.AuthService = {
     verifyEmailToDB,
     loginUserFromDB,
@@ -322,3 +311,4 @@ exports.AuthService = {
     refreshTokenToDB,
     logoutFromDB,
 };
+//# sourceMappingURL=auth.service.js.map

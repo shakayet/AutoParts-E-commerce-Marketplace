@@ -10,3 +10,4 @@ const pick = (obj, keys) => {
     return finalObj;
 };
 exports.default = pick;
+//# sourceMappingURL=pick.js.map

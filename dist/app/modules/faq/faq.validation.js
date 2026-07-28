@@ -13,3 +13,4 @@ const updateFAQZodSchema = zod_1.z.object({
     image: zod_1.z.string().optional(),
 });
 exports.FAQValidation = { createFAQZodSchema, updateFAQZodSchema };
+//# sourceMappingURL=faq.validation.js.map

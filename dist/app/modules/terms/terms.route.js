@@ -20,3 +20,4 @@ router
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(terms_validation_1.TermsValidation.updateTermsZodSchema), terms_controller_1.TermsController.updateTerms)
     .delete((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), terms_controller_1.TermsController.deleteTerms);
 exports.TermsRoutes = router;
+//# sourceMappingURL=terms.route.js.map

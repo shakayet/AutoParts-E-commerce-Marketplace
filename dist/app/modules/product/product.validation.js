@@ -67,3 +67,4 @@ exports.ProductValidation = {
     productQueryZodSchema,
     searchProductQueryZodSchema,
 };
+//# sourceMappingURL=product.validation.js.map

@@ -9,3 +9,4 @@ const privacyPolicySchema = new mongoose_1.Schema({
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 exports.PrivacyPolicy = (0, mongoose_1.model)('PrivacyPolicy', privacyPolicySchema);
+//# sourceMappingURL=privacyPolicy.model.js.map

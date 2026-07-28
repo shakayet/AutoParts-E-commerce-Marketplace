@@ -17,3 +17,4 @@ const updateTermsZodSchema = zod_1.z.object({
     }),
 });
 exports.TermsValidation = { createTermsZodSchema, updateTermsZodSchema };
+//# sourceMappingURL=terms.validation.js.map

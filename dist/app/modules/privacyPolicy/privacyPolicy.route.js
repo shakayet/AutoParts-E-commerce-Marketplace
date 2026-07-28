@@ -20,3 +20,4 @@ router
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(privacyPolicy_validation_1.PrivacyPolicyValidation.updatePrivacyPolicyZodSchema), privacyPolicy_controller_1.PrivacyPolicyController.updatePrivacyPolicy)
     .delete((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), privacyPolicy_controller_1.PrivacyPolicyController.deletePrivacyPolicy);
 exports.PrivacyPolicyRoutes = router;
+//# sourceMappingURL=privacyPolicy.route.js.map

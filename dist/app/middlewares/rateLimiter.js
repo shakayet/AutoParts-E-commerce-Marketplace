@@ -23,3 +23,4 @@ const rateLimiter = (0, express_rate_limit_1.default)({
     legacyHeaders: false,
 });
 exports.default = rateLimiter;
+//# sourceMappingURL=rateLimiter.js.map

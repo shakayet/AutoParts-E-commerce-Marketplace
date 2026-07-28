@@ -21,3 +21,4 @@ const reportSchema = new mongoose_1.Schema({
 }, { timestamps: true });
 reportSchema.index({ type: 1, targetId: 1 });
 exports.Report = (0, mongoose_1.model)('Report', reportSchema);
+//# sourceMappingURL=report.model.js.map

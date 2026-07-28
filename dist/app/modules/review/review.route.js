@@ -22,3 +22,4 @@ router
     .route('/')
     .post((0, auth_1.default)(user_1.USER_ROLES.USER), (0, validateRequest_1.default)(review_validation_1.ReviewValidation.createReviewZodSchema), review_controller_1.ReviewController.createReview);
 exports.ReviewRoutes = router;
+//# sourceMappingURL=review.route.js.map

@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -75,7 +66,7 @@ const fileUploadHandler = () => {
     // Wrap multer middleware: after files are parsed into memory buffers,
     // upload ALL files to S3 in parallel using Promise.all().
     const wrapped = (req, res, next) => {
-        upload(req, res, (err) => __awaiter(void 0, void 0, void 0, function* () {
+        upload(req, res, async (err) => {
             if (err) {
                 return next(err);
             }
@@ -90,32 +81,33 @@ const fileUploadHandler = () => {
                     if (!arr)
                         continue;
                     for (const file of arr) {
-                        uploadPromises.push((() => __awaiter(void 0, void 0, void 0, function* () {
+                        uploadPromises.push((async () => {
                             try {
                                 // memoryStorage attaches a `buffer` property
                                 const buffer = file.buffer;
                                 if (buffer) {
-                                    const url = yield StorageService.uploadBuffer(buffer, file.originalname);
+                                    const url = await StorageService.uploadBuffer(buffer, file.originalname);
                                     file.url = url;
                                 }
                             }
                             catch (uploadErr) {
                                 throw uploadErr;
                             }
-                        }))());
+                        })());
                     }
                 }
                 try {
                     // Upload all files in parallel
-                    yield Promise.all(uploadPromises);
+                    await Promise.all(uploadPromises);
                 }
                 catch (uploadErr) {
                     return next(uploadErr);
                 }
             }
             next();
-        }));
+        });
     };
     return wrapped;
 };
 exports.default = fileUploadHandler;
+//# sourceMappingURL=fileUploadHandler.js.map

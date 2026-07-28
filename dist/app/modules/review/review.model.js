@@ -15,3 +15,4 @@ const reviewSchema = new mongoose_1.Schema({
 }, { timestamps: true });
 reviewSchema.index({ productId: 1, userId: 1 }, { unique: true });
 exports.Review = (0, mongoose_1.model)('Review', reviewSchema);
+//# sourceMappingURL=review.model.js.map

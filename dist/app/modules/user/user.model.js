@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -98,35 +89,34 @@ const userSchema = new mongoose_1.Schema({
     },
 }, { timestamps: true });
 //exist user check
-userSchema.statics.isExistUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExist = yield exports.User.findById(id);
+userSchema.statics.isExistUserById = async (id) => {
+    const isExist = await exports.User.findById(id);
     return isExist;
-});
-userSchema.statics.isExistUserByEmail = (email) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExist = yield exports.User.findOne({ email });
+};
+userSchema.statics.isExistUserByEmail = async (email) => {
+    const isExist = await exports.User.findOne({ email });
     return isExist;
-});
+};
 //is match password
-userSchema.statics.isMatchPassword = (password, hashPassword) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield bcrypt_1.default.compare(password, hashPassword);
-});
+userSchema.statics.isMatchPassword = async (password, hashPassword) => {
+    return await bcrypt_1.default.compare(password, hashPassword);
+};
 //check user
-userSchema.pre('save', function (next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // only run on new documents or when email/password is modified
-        if (this.isNew || this.isModified('email') || this.isModified('password')) {
-            // check duplicate email (exclude self when updating)
-            const exists = yield exports.User.findOne({ email: this.email });
-            if (exists &&
-                (!this._id || exists._id.toString() !== this._id.toString())) {
-                throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Email already exist!');
-            }
-            // hash password if modified
-            if (this.isModified('password') && this.password) {
-                this.password = yield bcrypt_1.default.hash(this.password, Number(config_1.default.bcrypt_salt_rounds));
-            }
+userSchema.pre('save', async function (next) {
+    // only run on new documents or when email/password is modified
+    if (this.isNew || this.isModified('email') || this.isModified('password')) {
+        // check duplicate email (exclude self when updating)
+        const exists = await exports.User.findOne({ email: this.email });
+        if (exists &&
+            (!this._id || exists._id.toString() !== this._id.toString())) {
+            throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Email already exist!');
         }
-        next();
-    });
+        // hash password if modified
+        if (this.isModified('password') && this.password) {
+            this.password = await bcrypt_1.default.hash(this.password, Number(config_1.default.bcrypt_salt_rounds));
+        }
+    }
+    next();
 });
 exports.User = (0, mongoose_1.model)('User', userSchema);
+//# sourceMappingURL=user.model.js.map

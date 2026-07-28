@@ -31,7 +31,7 @@ const globalErrorHandler = (error, req, res, next) => {
     else if (error.name === 'TokenExpiredError') {
         statusCode = http_status_codes_1.StatusCodes.UNAUTHORIZED;
         message = 'Session Expired';
-        errorMessages = (error === null || error === void 0 ? void 0 : error.message)
+        errorMessages = error?.message
             ? [
                 {
                     path: '',
@@ -58,7 +58,7 @@ const globalErrorHandler = (error, req, res, next) => {
             ? [
                 {
                     path: '',
-                    message: error === null || error === void 0 ? void 0 : error.message,
+                    message: error?.message,
                 },
             ]
             : [];
@@ -67,7 +67,8 @@ const globalErrorHandler = (error, req, res, next) => {
         success: false,
         message,
         errorMessages,
-        stack: config_1.default.node_env !== 'production' ? error === null || error === void 0 ? void 0 : error.stack : undefined,
+        stack: config_1.default.node_env !== 'production' ? error?.stack : undefined,
     });
 };
 exports.default = globalErrorHandler;
+//# sourceMappingURL=globalErrorHandler.js.map

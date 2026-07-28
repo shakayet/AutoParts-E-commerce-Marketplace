@@ -12,3 +12,4 @@ const categorySchema = new mongoose_1.Schema({
 }, { timestamps: true });
 // categorySchema.index({ name: 1 });
 exports.Category = (0, mongoose_1.model)('Category', categorySchema);
+//# sourceMappingURL=category.model.js.map

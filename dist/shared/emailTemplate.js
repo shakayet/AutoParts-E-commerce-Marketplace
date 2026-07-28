@@ -239,3 +239,4 @@ exports.emailTemplate = {
     resetPassword,
     reportStatusUpdate,
 };
+//# sourceMappingURL=emailTemplate.js.map

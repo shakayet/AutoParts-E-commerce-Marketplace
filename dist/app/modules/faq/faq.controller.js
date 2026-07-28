@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -18,45 +9,52 @@ const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 const faq_service_1 = require("./faq.service");
 const http_status_codes_1 = require("http-status-codes");
 const getFilePath_1 = require("../../../shared/getFilePath");
-const createFAQ = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createFAQ = (0, catchAsync_1.default)(async (req, res) => {
     const image = (0, getFilePath_1.getSingleFilePath)(req.files, 'image');
-    const data = Object.assign({ image }, req.body);
-    const result = yield faq_service_1.FAQService.createFAQToDB(data);
+    const data = {
+        image,
+        ...req.body,
+    };
+    const result = await faq_service_1.FAQService.createFAQToDB(data);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.CREATED,
         message: 'FAQ created successfully',
         data: result,
     });
-}));
-const updateFAQ = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const updateFAQ = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
     const image = (0, getFilePath_1.getSingleFilePath)(req.files, 'image');
-    const data = Object.assign({ image }, req.body);
-    const result = yield faq_service_1.FAQService.updateFAQToDB(id, data);
+    const data = {
+        image,
+        ...req.body,
+    };
+    const result = await faq_service_1.FAQService.updateFAQToDB(id, data);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'FAQ updated successfully',
         data: result,
     });
-}));
-const deleteFAQ = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const deleteFAQ = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
-    yield faq_service_1.FAQService.deleteFAQFromDB(id);
+    await faq_service_1.FAQService.deleteFAQFromDB(id);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'FAQ deleted successfully',
     });
-}));
-const getFAQs = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield faq_service_1.FAQService.getFAQsFromDB();
+});
+const getFAQs = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await faq_service_1.FAQService.getFAQsFromDB();
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'FAQs retrieved successfully',
         data: result,
     });
-}));
+});
 exports.FAQController = { createFAQ, updateFAQ, deleteFAQ, getFAQs };
+//# sourceMappingURL=faq.controller.js.map

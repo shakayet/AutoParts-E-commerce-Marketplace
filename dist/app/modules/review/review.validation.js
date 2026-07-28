@@ -18,3 +18,4 @@ const getReviewsZodSchema = zod_1.z.object({
     }),
 });
 exports.ReviewValidation = { createReviewZodSchema, getReviewsZodSchema };
+//# sourceMappingURL=review.validation.js.map

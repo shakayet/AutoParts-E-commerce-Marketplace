@@ -11,3 +11,4 @@ const sendResponse = (res, data) => {
     res.status(data.statusCode).json(resData);
 };
 exports.default = sendResponse;
+//# sourceMappingURL=sendResponse.js.map

@@ -20,7 +20,7 @@ router
     .get((0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), categoryRequest_controller_1.CategoryRequestController.getCategoryRequests)
     .post((0, auth_1.default)(user_1.USER_ROLES.USER), (0, fileUploadHandler_1.default)(), (req, res, next) => {
     if (req.body.data) {
-        req.body = Object.assign({}, JSON.parse(req.body.data));
+        req.body = { ...JSON.parse(req.body.data) };
     }
     const image = (0, getFilePath_1.getSingleFilePath)(req.files, 'image');
     if (image)
@@ -35,3 +35,4 @@ router
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(categoryRequest_validation_1.CategoryRequestValidation.reviewCategoryRequestZodSchema), categoryRequest_controller_1.CategoryRequestController.reviewCategoryRequest)
     .delete((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), categoryRequest_controller_1.CategoryRequestController.deleteCategoryRequest);
 exports.CategoryRequestRoutes = router;
+//# sourceMappingURL=categoryRequest.route.js.map

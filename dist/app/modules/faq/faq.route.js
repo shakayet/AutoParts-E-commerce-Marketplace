@@ -17,19 +17,18 @@ router
     .route('/')
     .get(faq_controller_1.FAQController.getFAQs)
     .post((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, fileUploadHandler_1.default)(), (req, res, next) => {
-    var _a;
-    req.body = faq_validation_1.FAQValidation.createFAQZodSchema.parse(JSON.parse((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.data));
+    req.body = faq_validation_1.FAQValidation.createFAQZodSchema.parse(JSON.parse(req?.body?.data));
     return faq_controller_1.FAQController.createFAQ(req, res, next);
 });
 // validateRequest(FAQValidation.createFAQZodSchema), FAQController.createFAQ);
 router
     .route('/:id')
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, fileUploadHandler_1.default)(), (req, res, next) => {
-    var _a;
     if (req.body.data) {
-        req.body = faq_validation_1.FAQValidation.updateFAQZodSchema.parse(JSON.parse((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.data));
+        req.body = faq_validation_1.FAQValidation.updateFAQZodSchema.parse(JSON.parse(req?.body?.data));
     }
     return faq_controller_1.FAQController.updateFAQ(req, res, next);
 })
     .delete((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), faq_controller_1.FAQController.deleteFAQ);
 exports.FAQRoutes = router;
+//# sourceMappingURL=faq.route.js.map

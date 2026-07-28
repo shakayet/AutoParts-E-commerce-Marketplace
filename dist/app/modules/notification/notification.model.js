@@ -10,3 +10,4 @@ const notificationSchema = new mongoose_1.Schema({
     isRead: { type: Boolean, default: false },
 }, { timestamps: true });
 exports.Notification = (0, mongoose_1.model)('Notification', notificationSchema);
+//# sourceMappingURL=notification.model.js.map

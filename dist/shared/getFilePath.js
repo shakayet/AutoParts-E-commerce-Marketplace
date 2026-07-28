@@ -28,3 +28,4 @@ const getMultipleFilesPath = (files, folderName) => {
     return undefined;
 };
 exports.getMultipleFilesPath = getMultipleFilesPath;
+//# sourceMappingURL=getFilePath.js.map

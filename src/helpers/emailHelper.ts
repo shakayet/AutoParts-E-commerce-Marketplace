@@ -3,6 +3,7 @@ import {
   SendEmailCommand,
   SendEmailCommandInput,
   MessageRejected,
+  ServiceOutputTypes,
 } from '@aws-sdk/client-ses';
 import config from '../config';
 import { errorLogger, logger } from '../shared/logger';
@@ -37,6 +38,12 @@ const htmlToText = (html: string): string => {
     .trim();
 };
 
+type ErrorWithMeta = Error & {
+  name: string;
+  code?: string;
+  $metadata?: ServiceOutputTypes['$metadata'];
+};
+
 const isTransientError = (err: unknown): boolean => {
   if (err instanceof MessageRejected) {
     return false;
@@ -59,9 +66,10 @@ const isTransientError = (err: unknown): boolean => {
       'TooManyRequestsException',
     ];
     const retryableStatusCodes = [408, 429, 500, 502, 503, 504];
-    const name = (err as any).name || '';
-    const code = (err as any).code || '';
-    const statusCode = (err as any).$metadata?.httpStatusCode;
+    const e = err as ErrorWithMeta;
+    const name = e.name || '';
+    const code = e.code || '';
+    const statusCode = e.$metadata?.httpStatusCode;
     const nameOrCodeMatch = retryableCodes.some(
       (c) => name.includes(c) || code.includes(c),
     );

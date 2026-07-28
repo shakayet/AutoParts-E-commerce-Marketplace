@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,46 +8,47 @@ const catchAsync_1 = __importDefault(require("../../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 const terms_service_1 = require("./terms.service");
 const http_status_codes_1 = require("http-status-codes");
-const createTerms = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield terms_service_1.TermsService.createTermsToDB(req.body);
+const createTerms = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await terms_service_1.TermsService.createTermsToDB(req.body);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.CREATED,
         message: 'Terms created',
         data: result,
     });
-}));
-const updateTerms = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const updateTerms = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
-    const result = yield terms_service_1.TermsService.updateTermsToDB(id, req.body);
+    const result = await terms_service_1.TermsService.updateTermsToDB(id, req.body);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'Terms updated',
         data: result,
     });
-}));
-const deleteTerms = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const deleteTerms = (0, catchAsync_1.default)(async (req, res) => {
     const { id } = req.params;
-    yield terms_service_1.TermsService.deleteTermsFromDB(id);
+    await terms_service_1.TermsService.deleteTermsFromDB(id);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'Terms deleted',
     });
-}));
-const getTerms = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield terms_service_1.TermsService.getTermsFromDB();
+});
+const getTerms = (0, catchAsync_1.default)(async (req, res) => {
+    const result = await terms_service_1.TermsService.getTermsFromDB();
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,
         message: 'Terms retrieved',
         data: result,
     });
-}));
+});
 exports.TermsController = {
     createTerms,
     updateTerms,
     deleteTerms,
     getTerms,
 };
+//# sourceMappingURL=terms.controller.js.map

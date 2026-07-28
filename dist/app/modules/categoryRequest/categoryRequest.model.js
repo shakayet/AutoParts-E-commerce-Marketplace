@@ -11,3 +11,4 @@ const categoryRequestSchema = new mongoose_1.Schema({
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
 }, { timestamps: true });
 exports.CategoryRequest = (0, mongoose_1.model)('CategoryRequest', categoryRequestSchema);
+//# sourceMappingURL=categoryRequest.model.js.map

@@ -20,3 +20,4 @@ exports.PrivacyPolicyValidation = {
     createPrivacyPolicyZodSchema,
     updatePrivacyPolicyZodSchema,
 };
+//# sourceMappingURL=privacyPolicy.validation.js.map

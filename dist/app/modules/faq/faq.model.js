@@ -10,3 +10,4 @@ const faqSchema = new mongoose_1.Schema({
     isActive: { type: Boolean, default: true, required: true },
 }, { timestamps: true });
 exports.FAQ = (0, mongoose_1.model)('FAQ', faqSchema);
+//# sourceMappingURL=faq.model.js.map

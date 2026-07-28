@@ -19,3 +19,4 @@ router
     .route('/:productId')
     .delete((0, auth_1.default)(user_1.USER_ROLES.USER), (0, validateRequest_1.default)(wishlist_validation_1.WishlistValidation.removeFromWishlist), wishlist_controller_1.WishlistController.removeFromWishlist);
 exports.WishlistRoutes = router;
+//# sourceMappingURL=wishlist.route.js.map

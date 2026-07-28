@@ -12,6 +12,8 @@ const rateLimiter_1 = __importDefault(require("./app/middlewares/rateLimiter"));
 const routes_1 = __importDefault(require("./routes"));
 const morgen_1 = require("./shared/morgen");
 const app = (0, express_1.default)();
+// Trust the first reverse proxy (Nginx)
+app.set('trust proxy', 1);
 //morgan
 app.use(morgen_1.Morgan.successHandler);
 app.use(morgen_1.Morgan.errorHandler);
@@ -49,3 +51,4 @@ app.use((req, res) => {
     });
 });
 exports.default = app;
+//# sourceMappingURL=app.js.map

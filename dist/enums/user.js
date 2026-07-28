@@ -7,3 +7,4 @@ var USER_ROLES;
     USER_ROLES["ADMIN"] = "ADMIN";
     USER_ROLES["USER"] = "USER";
 })(USER_ROLES || (exports.USER_ROLES = USER_ROLES = {}));
+//# sourceMappingURL=user.js.map

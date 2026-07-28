@@ -22,3 +22,4 @@ exports.WishlistValidation = {
         }),
     }),
 };
+//# sourceMappingURL=wishlist.validation.js.map

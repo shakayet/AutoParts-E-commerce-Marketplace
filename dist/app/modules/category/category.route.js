@@ -20,7 +20,9 @@ router
     .post((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, fileUploadHandler_1.default)(), // multer middleware
 (req, res, next) => {
     if (req.body.data) {
-        req.body = Object.assign({}, JSON.parse(req.body.data));
+        req.body = {
+            ...JSON.parse(req.body.data),
+        };
     }
     const imagePath = (0, getFilePath_1.getSingleFilePath)(req.files, 'image');
     if (imagePath) {
@@ -39,7 +41,9 @@ router
     .get(category_controller_1.CategoryController.getSingleCategory)
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, fileUploadHandler_1.default)(), (req, res, next) => {
     if (req.body.data) {
-        req.body = Object.assign({}, JSON.parse(req.body.data));
+        req.body = {
+            ...JSON.parse(req.body.data),
+        };
     }
     const imagePath = (0, getFilePath_1.getSingleFilePath)(req.files, 'image');
     if (imagePath) {
@@ -55,3 +59,4 @@ router
 })
     .delete((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), category_controller_1.CategoryController.deleteCategory);
 exports.CategoryRoutes = router;
+//# sourceMappingURL=category.route.js.map

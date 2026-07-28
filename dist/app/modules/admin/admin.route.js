@@ -14,3 +14,4 @@ router.get('/category-summary', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, use
 router.get('/products', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), admin_controller_1.AdminController.getProducts);
 router.get('/products/:id', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), admin_controller_1.AdminController.getProduct);
 exports.AdminRoutes = router;
+//# sourceMappingURL=admin.route.js.map

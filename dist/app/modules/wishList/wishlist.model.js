@@ -18,3 +18,4 @@ const wishlistSchema = new mongoose_1.Schema({
 // Prevent duplicate wishlist items for same user-product pair
 wishlistSchema.index({ userId: 1, productId: 1 }, { unique: true });
 exports.Wishlist = (0, mongoose_1.model)('Wishlist', wishlistSchema);
+//# sourceMappingURL=wishlist.model.js.map

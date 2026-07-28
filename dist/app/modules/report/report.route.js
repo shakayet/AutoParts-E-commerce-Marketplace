@@ -15,8 +15,7 @@ const router = express_1.default.Router();
 router
     .route('/')
     .post((0, auth_1.default)(user_1.USER_ROLES.USER), (0, fileUploadHandler_1.default)(), (req, res, next) => {
-    var _a;
-    req.body = report_validation_1.ReportValidation.createReportZodSchema.parse(JSON.parse((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.data));
+    req.body = report_validation_1.ReportValidation.createReportZodSchema.parse(JSON.parse(req?.body?.data));
     return report_controller_1.ReportController.createReport(req, res, next);
 });
 router
@@ -30,3 +29,4 @@ router
     .route('/:id/decision')
     .patch((0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(report_validation_1.ReportValidation.reviewReportZodSchema), report_controller_1.ReportController.reviewReport);
 exports.ReportRoutes = router;
+//# sourceMappingURL=report.route.js.map

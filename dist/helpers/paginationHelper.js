@@ -18,3 +18,4 @@ const calculatePagination = (options) => {
 exports.paginationHelper = {
     calculatePagination,
 };
+//# sourceMappingURL=paginationHelper.js.map

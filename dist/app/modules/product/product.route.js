@@ -16,8 +16,7 @@ router
     .route('/')
     .get((0, validateRequest_1.default)(product_validation_1.ProductValidation.productQueryZodSchema), product_controller_1.ProductController.getProducts)
     .post((0, auth_1.default)(user_1.USER_ROLES.USER), (0, fileUploadHandler_1.default)(), (req, res, next) => {
-    var _a;
-    req.body = product_validation_1.ProductValidation.createProductZodSchema.parse(JSON.parse((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.data));
+    req.body = product_validation_1.ProductValidation.createProductZodSchema.parse(JSON.parse(req?.body?.data));
     return product_controller_1.ProductController.createProduct(req, res, next);
 });
 router
@@ -38,3 +37,4 @@ router
     .delete((0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), product_controller_1.ProductController.deleteProduct);
 router.route('/:id/related').get(product_controller_1.ProductController.getRelatedProducts);
 exports.ProductRoutes = router;
+//# sourceMappingURL=product.route.js.map

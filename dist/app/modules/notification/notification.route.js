@@ -22,3 +22,4 @@ router
     .route('/:id')
     .delete((0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), notification_controller_1.NotificationController.deleteNotification);
 exports.NotificationRoutes = router;
+//# sourceMappingURL=notification.route.js.map

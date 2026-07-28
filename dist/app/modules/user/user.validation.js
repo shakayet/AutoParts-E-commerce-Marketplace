@@ -6,6 +6,7 @@ const createUserZodSchema = zod_1.z.object({
     body: zod_1.z.object({
         name: zod_1.z.string({ required_error: 'Name is required' }),
         whatsappNumber: zod_1.z.string().optional(),
+        contact: zod_1.z.string().optional(),
         email: zod_1.z.string({ required_error: 'Email is required' }),
         password: zod_1.z.string({ required_error: 'Password is required' }),
         location: zod_1.z.string().optional(),
@@ -43,3 +44,4 @@ exports.UserValidation = {
     blockUnblockZodSchema,
     deleteAccountZodSchema,
 };
+//# sourceMappingURL=user.validation.js.map

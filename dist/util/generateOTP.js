@@ -4,3 +4,4 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000);
 };
 exports.default = generateOTP;
+//# sourceMappingURL=generateOTP.js.map

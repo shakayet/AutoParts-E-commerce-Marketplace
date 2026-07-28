@@ -41,3 +41,4 @@ router
     .route('/delete-account')
     .delete((0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), (0, validateRequest_1.default)(user_validation_1.UserValidation.deleteAccountZodSchema), user_controller_1.UserController.deleteAccount);
 exports.UserRoutes = router;
+//# sourceMappingURL=user.route.js.map

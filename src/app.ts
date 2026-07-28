@@ -8,6 +8,9 @@ import router from './routes';
 import { Morgan } from './shared/morgen';
 const app = express();
 
+// Trust the first reverse proxy (Nginx)
+app.set('trust proxy', 1);
+
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);

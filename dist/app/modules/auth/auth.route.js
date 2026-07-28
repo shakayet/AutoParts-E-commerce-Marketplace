@@ -22,3 +22,4 @@ router.post('/forget-password', (0, validateRequest_1.default)(auth_validation_1
 router.post('/reset-password', (0, validateRequest_1.default)(auth_validation_1.AuthValidation.createResetPasswordZodSchema), auth_controller_1.AuthController.resetPassword);
 router.post('/change-password', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(auth_validation_1.AuthValidation.createChangePasswordZodSchema), auth_controller_1.AuthController.changePassword);
 exports.AuthRoutes = router;
+//# sourceMappingURL=auth.route.js.map

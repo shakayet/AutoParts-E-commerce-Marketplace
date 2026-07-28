@@ -9,3 +9,4 @@ const termsSchema = new mongoose_1.Schema({
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 exports.Terms = (0, mongoose_1.model)('Terms', termsSchema);
+//# sourceMappingURL=terms.model.js.map

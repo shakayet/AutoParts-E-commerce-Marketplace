@@ -8,3 +8,4 @@ const cryptoToken = () => {
     return crypto_1.default.randomBytes(32).toString('hex');
 };
 exports.default = cryptoToken;
+//# sourceMappingURL=cryptoToken.js.map

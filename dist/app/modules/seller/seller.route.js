@@ -13,3 +13,4 @@ router
     .route('/:id/location')
     .get((0, validateRequest_1.default)(seller_validation_1.SellerValidation.getSellerLocationZodSchema), seller_controller_1.SellerController.getSellerLocationLink);
 exports.SellerRoutes = router;
+//# sourceMappingURL=seller.route.js.map

@@ -44,3 +44,4 @@ const productSchema = new mongoose_1.Schema({
 productSchema.index({ title: 'text', description: 'text', brand: 'text' });
 productSchema.index({ coordinates: '2dsphere' });
 exports.Product = (0, mongoose_1.model)('Product', productSchema);
+//# sourceMappingURL=product.model.js.map
