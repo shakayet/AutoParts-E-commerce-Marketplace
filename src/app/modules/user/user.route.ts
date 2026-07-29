@@ -41,17 +41,6 @@ router
   );
 
 router
-  .route('/:id')
-  .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    UserController.getUserById,
-  )
-  .delete(
-    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-    UserController.deleteUser,
-  );
-
-router
   .route('/change-password')
   .patch(
     auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
@@ -73,6 +62,17 @@ router
     auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
     validateRequest(UserValidation.deleteAccountZodSchema),
     UserController.deleteAccount,
+  );
+
+router
+  .route('/:id')
+  .get(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    UserController.getUserById,
+  )
+  .delete(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    UserController.deleteUser,
   );
 
 export const UserRoutes = router;

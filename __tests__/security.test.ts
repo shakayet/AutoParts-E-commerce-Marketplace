@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from '@jest/globals';
 import app from '../src/app';
 import { User } from '../src/app/modules/user/user.model';
+import { UserRoutes } from '../src/app/modules/user/user.route';
 import { UserValidation } from '../src/app/modules/user/user.validation';
 
 describe('security invariants', () => {
@@ -18,6 +19,16 @@ describe('security invariants', () => {
       },
     });
     expect(result.success).toBe(false);
+  });
+
+  it('matches the delete-account route before the parameterized user route', () => {
+    const routePaths = UserRoutes.stack
+      .map(layer => layer.route?.path)
+      .filter((path): path is string => typeof path === 'string');
+
+    expect(routePaths.indexOf('/delete-account')).toBeLessThan(
+      routePaths.indexOf('/:id'),
+    );
   });
 
   it('keeps the health response format stable when the database is unavailable', async () => {
