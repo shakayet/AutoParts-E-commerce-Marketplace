@@ -3,6 +3,4 @@ node_modules
 
 /winston
 /uploads
-.github/workflows
 .vscode
-/__tests__

@@ -14,7 +14,7 @@ const getNotifications = catchAsync(async (req: Request, res: Response) => {
   if (isRead !== undefined) opts.isRead = isRead === 'true';
   const result = await NotificationService.getNotificationsForUser(
     user.id,
-    opts
+    opts,
   );
   sendResponse(res, {
     success: true,
@@ -46,7 +46,6 @@ const markAllRead = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 const deleteNotification = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;

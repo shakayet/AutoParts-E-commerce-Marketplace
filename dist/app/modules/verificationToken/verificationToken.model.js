@@ -10,7 +10,11 @@ const verificationTokenSchema = new mongoose_1.Schema({
     attempts: { type: Number, default: 0 },
 }, { timestamps: true });
 verificationTokenSchema.statics.isValidOtp = async function (userId, otp) {
-    const record = await exports.VerificationToken.findOne({ user: userId, otp, expireAt: { $gt: new Date() } });
+    const record = await exports.VerificationToken.findOne({
+        user: userId,
+        otp,
+        expireAt: { $gt: new Date() },
+    });
     return !!record;
 };
 exports.VerificationToken = (0, mongoose_1.model)('VerificationToken', verificationTokenSchema);

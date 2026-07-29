@@ -1,4 +1,4 @@
-# Project Name
+# AutoParts E-commerce Marketplace API
 
 [![codecov](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace/branch/main/graph/badge.svg)](https://codecov.io/gh/shakayet/AutoParts-E-commerce-Marketplace)
 
@@ -50,8 +50,8 @@ Ensure you have the following installed:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/your-repository.git
-   cd your-repository
+   git clone https://github.com/shakayet/AutoParts-E-commerce-Marketplace.git
+   cd AutoParts-E-commerce-Marketplace
    ```
 
 2. **Install dependencies:**
@@ -111,12 +111,26 @@ Ensure you have the following installed:
    yarn run dev
    ```
 
-### Running the Tests
-
-Explain how to run the automated tests for this system.
+### Verification
 
 ```bash
-npm test
+npm run check
 ```
 
-# AUTOPASS E-COMMERCE
+This runs the production build, linting, formatting checks, and automated tests.
+
+### Production
+
+Copy `.env.example` into your deployment secret manager and replace every
+placeholder. Production startup validates required settings, including separate
+access/refresh JWT secrets and an explicit comma-separated `CORS_ORIGINS` list.
+Do not commit `.env`.
+
+Build the container with:
+
+```bash
+docker build -t autoparts-api .
+```
+
+The container runs as a non-root user and exposes `GET /health` for readiness
+and liveness checks.

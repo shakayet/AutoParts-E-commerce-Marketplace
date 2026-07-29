@@ -30,17 +30,19 @@ const isTransientDbNetworkError = (err: unknown): boolean => {
     err instanceof Error
       ? `${err.name} ${err.message} ${(err as Error & { code?: string }).code ?? ''}`
       : String(err ?? '');
-  return TRANSIENT_ERROR_PATTERNS.some((p) =>
+  return TRANSIENT_ERROR_PATTERNS.some(p =>
     msg.toLowerCase().includes(p.toLowerCase()),
   );
 };
 
 //uncaught exception
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   if (isTransientDbNetworkError(error)) {
     errorLogger.error(
       `Transient network/DNS exception (kept running): ${
-        error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+        error instanceof Error
+          ? `${error.name}: ${error.message}`
+          : String(error)
       }`,
     );
     return;
@@ -64,11 +66,13 @@ process.on('uncaughtException', (error) => {
 });
 
 // handle unhandleRejection (registered BEFORE main() so bootstrap rejections are also caught)
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', error => {
   if (isTransientDbNetworkError(error)) {
     errorLogger.error(
       `Transient network/DNS rejection (kept running): ${
-        error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+        error instanceof Error
+          ? `${error.name}: ${error.message}`
+          : String(error)
       }`,
     );
     return;
@@ -97,11 +101,14 @@ process.on('unhandledRejection', (error) => {
 });
 
 let server: import('http').Server | undefined;
+let socketServer: Server | undefined;
+let shuttingDown = false;
 
 const MAX_CONNECT_ATTEMPTS = 5;
 const CONNECT_BASE_DELAY_MS = 2000;
 
-const isSRVUri = (uri: string): boolean => uri.trimStart().startsWith('mongodb+srv://');
+const isSRVUri = (uri: string): boolean =>
+  uri.trimStart().startsWith('mongodb+srv://');
 
 const extractSRVHost = (uri: string): string | null => {
   const match = uri.match(/^mongodb\+srv:\/\/[^@]+@([^/?]+)/);
@@ -115,22 +122,22 @@ const printSRVWorkaround = (uri: string) => {
     : '<cluster>';
   errorLogger.error(
     '══════════════════════════════════════════════════════════════════════\n' +
-    '  DNS SRV LOOKUP BLOCKED (Windows/Git Bash / firewall / VPN)\n' +
-    '  Your network is refusing DNS SRV queries required by mongodb+srv://\n\n' +
-    (srvHost
-      ? `  Run this command (Windows PowerShell) to find the seed hosts:\n` +
-        `     nslookup -type=SRV _mongodb._tcp.${srvHost}\n\n`
-      : '') +
-    '  QUICK FIX — In Atlas go to: Connect → Drivers → Node.js 2.2.12 or later.\n' +
-    '  Copy the "mongodb://" (NOT "mongodb+srv://") seed-list URI and paste it\n' +
-    '  into your .env DATABASE_URL. Example shape:\n\n' +
-    `    mongodb://<user>:<pass>@${clusterPart}-shard-00-00.XXXXX.mongodb.net:27017,\n` +
-    `    ${clusterPart}-shard-00-01.XXXXX.mongodb.net:27017,\n` +
-    `    ${clusterPart}-shard-00-02.XXXXX.mongodb.net:27017/<db>?ssl=true&\n` +
-    `    replicaSet=atlas-${clusterPart}-shard-0&authSource=admin&\n` +
-    `    retryWrites=true&w=majority\n\n` +
-    '  That format uses standard A-record DNS and avoids SRV entirely.\n' +
-    '══════════════════════════════════════════════════════════════════════',
+      '  DNS SRV LOOKUP BLOCKED (Windows/Git Bash / firewall / VPN)\n' +
+      '  Your network is refusing DNS SRV queries required by mongodb+srv://\n\n' +
+      (srvHost
+        ? `  Run this command (Windows PowerShell) to find the seed hosts:\n` +
+          `     nslookup -type=SRV _mongodb._tcp.${srvHost}\n\n`
+        : '') +
+      '  QUICK FIX — In Atlas go to: Connect → Drivers → Node.js 2.2.12 or later.\n' +
+      '  Copy the "mongodb://" (NOT "mongodb+srv://") seed-list URI and paste it\n' +
+      '  into your .env DATABASE_URL. Example shape:\n\n' +
+      `    mongodb://<user>:<pass>@${clusterPart}-shard-00-00.XXXXX.mongodb.net:27017,\n` +
+      `    ${clusterPart}-shard-00-01.XXXXX.mongodb.net:27017,\n` +
+      `    ${clusterPart}-shard-00-02.XXXXX.mongodb.net:27017/<db>?ssl=true&\n` +
+      `    replicaSet=atlas-${clusterPart}-shard-0&authSource=admin&\n` +
+      `    retryWrites=true&w=majority\n\n` +
+      '  That format uses standard A-record DNS and avoids SRV entirely.\n' +
+      '══════════════════════════════════════════════════════════════════════',
   );
 };
 
@@ -152,18 +159,12 @@ async function connectWithRetry(connectionUri: string) {
       lastErr = error;
       if (attempt < MAX_CONNECT_ATTEMPTS) {
         const delay = CONNECT_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-        logger.warn
-          ? logger.warn(
-              `MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            )
-          : errorLogger.error(
-              `MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-            );
-        await new Promise((r) => setTimeout(r, delay));
+        logger.warn(
+          `MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+        await new Promise(r => setTimeout(r, delay));
       }
     }
   }
@@ -179,7 +180,7 @@ async function main() {
 
     // Mongoose emits errors on the connection after connect (e.g. DNS SRV polling
     // failures). Log them but do NOT kill the process — the driver will retry.
-    mongoose.connection.on('error', (err) => {
+    mongoose.connection.on('error', err => {
       if (isTransientDbNetworkError(err)) {
         errorLogger.error(
           `Transient DB connection issue (driver will retry): ${
@@ -191,6 +192,7 @@ async function main() {
       }
     });
     mongoose.connection.on('disconnected', () => {
+      // eslint-disable-next-line no-unused-expressions
       errorLogger.warn
         ? errorLogger.warn('Mongoose disconnected — driver will reconnect')
         : errorLogger.error('Mongoose disconnected — driver will reconnect');
@@ -205,15 +207,13 @@ async function main() {
 
     server = app.listen(port, bindAddress, () => {
       logger.info(
-        colors.yellow(
-          `♻️  Application listening on ${bindAddress}:${port}`,
-        ),
+        colors.yellow(`♻️  Application listening on ${bindAddress}:${port}`),
       );
     });
 
     // Catch bind/listen errors BEFORE they bubble to uncaughtException and
     // print a clear, actionable message (e.g. EADDRINUSE tells you who to kill).
-    server.once('error', (err) => {
+    server.once('error', err => {
       const code = (err as NodeJS.ErrnoException).code;
       const addr = `${bindAddress}:${port}`;
       if (code === 'EADDRINUSE') {
@@ -235,24 +235,26 @@ async function main() {
         );
       } else {
         errorLogger.error(
-          colors.red(`🚫 Failed to start HTTP server on ${addr}: ${
-            err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-          }`),
+          colors.red(
+            `🚫 Failed to start HTTP server on ${addr}: ${
+              err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+            }`,
+          ),
         );
       }
       process.exit(1);
     });
 
     //socket
-    const io = new Server(server, {
+    socketServer = new Server(server, {
       pingTimeout: 60000,
       cors: {
-        origin: '*',
+        origin: config.corsOrigins,
       },
     });
-    socketHelper.socket(io);
+    socketHelper.socket(socketServer);
     //@ts-expect-error
-    global.io = io;
+    global.io = socketServer;
   } catch (error) {
     errorLogger.error(
       colors.red('🤢 Failed to connect / bootstrap Database'),
@@ -276,10 +278,29 @@ async function main() {
 
 main();
 
-//SIGTERM
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM IS RECEIVE');
-  if (server) {
-    server.close();
-  }
-});
+const shutdown = async (signal: string) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`${signal} received; shutting down`);
+
+  const forceExit = setTimeout(() => {
+    errorLogger.error('Graceful shutdown timed out');
+    process.exit(1);
+  }, 10000);
+  forceExit.unref();
+
+  socketServer?.close();
+  await new Promise<void>(resolve => {
+    if (!server) {
+      resolve();
+      return;
+    }
+    server.close(() => resolve());
+  });
+  await mongoose.disconnect();
+  clearTimeout(forceExit);
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));

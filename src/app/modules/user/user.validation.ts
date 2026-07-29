@@ -6,7 +6,7 @@ const createUserZodSchema = z.object({
     whatsappNumber: z.string().optional(),
     contact: z.string().optional(),
     email: z.string({ required_error: 'Email is required' }),
-    password: z.string({ required_error: 'Password is required' }),
+    password: z.string({ required_error: 'Password is required' }).min(8),
     location: z.string().optional(),
     profile: z.string().optional(),
   }),
@@ -16,7 +16,6 @@ const updateUserZodSchema = z.object({
   name: z.string().optional(),
   contact: z.string().optional(),
   email: z.string().optional(),
-  password: z.string().optional(),
   location: z.string().optional(),
   image: z.string().optional(),
 });
@@ -24,7 +23,9 @@ const updateUserZodSchema = z.object({
 const changePasswordZodSchema = z.object({
   body: z.object({
     oldPassword: z.string({ required_error: 'Old password is required' }),
-    newPassword: z.string({ required_error: 'New password is required' }),
+    newPassword: z
+      .string({ required_error: 'New password is required' })
+      .min(8),
   }),
 });
 

@@ -7,10 +7,9 @@ import handleZodError from '../../errors/handleZodError';
 import { errorLogger } from '../../shared/logger';
 import { IErrorMessage } from '../../types/errors.types';
 
-const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
-  config.node_env === 'development'
-    ? console.log('🚨 globalErrorHandler ~~ ', error)
-    : errorLogger.error('🚨 globalErrorHandler ~~ ', error);
+const globalErrorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+  void _next;
+  errorLogger.error('Global request error', error);
 
   let statusCode = 500;
   let message = 'Something went wrong';
@@ -50,15 +49,17 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
         ]
       : [];
   } else if (error instanceof Error) {
-    message = error.message;
-    errorMessages = error.message
-      ? [
-          {
-            path: '',
-            message: error?.message,
-          },
-        ]
-      : [];
+    const exposeDetails = config.node_env !== 'production';
+    message = exposeDetails ? error.message : 'Something went wrong';
+    errorMessages =
+      exposeDetails && error.message
+        ? [
+            {
+              path: '',
+              message: error?.message,
+            },
+          ]
+        : [];
   }
 
   res.status(statusCode).json({

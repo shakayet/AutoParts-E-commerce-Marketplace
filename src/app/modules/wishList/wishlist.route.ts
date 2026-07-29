@@ -12,12 +12,12 @@ router
   .get(
     auth(USER_ROLES.USER),
     validateRequest(WishlistValidation.getWishlist),
-    WishlistController.getWishlist
+    WishlistController.getWishlist,
   )
   .post(
     auth(USER_ROLES.USER),
     validateRequest(WishlistValidation.addToWishlist),
-    WishlistController.addToWishlist
+    WishlistController.addToWishlist,
   );
 
 router
@@ -25,7 +25,7 @@ router
   .delete(
     auth(USER_ROLES.USER),
     validateRequest(WishlistValidation.removeFromWishlist),
-    WishlistController.removeFromWishlist
+    WishlistController.removeFromWishlist,
   );
 
 export const WishlistRoutes = router;

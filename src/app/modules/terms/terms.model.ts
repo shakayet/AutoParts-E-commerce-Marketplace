@@ -8,7 +8,7 @@ const termsSchema = new Schema<ITerms>(
     content: { type: String, required: true },
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Terms = model<ITerms>('Terms', termsSchema as any);

@@ -9,7 +9,9 @@ const createProductZodSchema = zod_1.z.object({
     description: zod_1.z.string().optional(),
     carModels: zod_1.z.array(zod_1.z.string()).optional(),
     chassisNumber: zod_1.z.string().optional(),
-    condition: zod_1.z.enum(['new', 'used', 'refurbished', 'newly imported']).optional(),
+    condition: zod_1.z
+        .enum(['new', 'used', 'refurbished', 'newly imported'])
+        .optional(),
     warranty: zod_1.z.string().optional(),
     price: zod_1.z.number({ required_error: 'Price is required' }),
     discount: zod_1.z.number().optional(),
@@ -24,7 +26,9 @@ const updateProductZodSchema = zod_1.z.object({
         description: zod_1.z.string().optional(),
         carModels: zod_1.z.array(zod_1.z.string()).optional(),
         chassisNumber: zod_1.z.string().optional(),
-        condition: zod_1.z.enum(['new', 'used', 'refurbished', 'newly imported']).optional(),
+        condition: zod_1.z
+            .enum(['new', 'used', 'refurbished', 'newly imported'])
+            .optional(),
         warranty: zod_1.z.string().optional(),
         price: zod_1.z.number().optional(),
         discount: zod_1.z.number().optional(),

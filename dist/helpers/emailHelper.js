@@ -7,7 +7,7 @@ exports.emailHelper = void 0;
 const client_ses_1 = require("@aws-sdk/client-ses");
 const config_1 = __importDefault(require("../config"));
 const logger_1 = require("../shared/logger");
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isValidEmail = (email) => {
     return EMAIL_REGEX.test(email);
@@ -58,8 +58,9 @@ const isTransientError = (err) => {
         const name = e.name || '';
         const code = e.code || '';
         const statusCode = e.$metadata?.httpStatusCode;
-        const nameOrCodeMatch = retryableCodes.some((c) => name.includes(c) || code.includes(c));
-        const statusMatch = typeof statusCode === 'number' && retryableStatusCodes.includes(statusCode);
+        const nameOrCodeMatch = retryableCodes.some(c => name.includes(c) || code.includes(c));
+        const statusMatch = typeof statusCode === 'number' &&
+            retryableStatusCodes.includes(statusCode);
         return nameOrCodeMatch || statusMatch;
     }
     return false;

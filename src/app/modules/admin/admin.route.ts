@@ -5,10 +5,7 @@ import { AdminController } from './admin.controller';
 
 const router = express.Router();
 
-router.get(
-  '/top-products',
-  AdminController.getTopProducts,
-);
+router.get('/top-products', AdminController.getTopProducts);
 
 router.get(
   '/category-summary',

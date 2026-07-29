@@ -4,147 +4,151 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
-const fs_1 = __importDefault(require("fs"));
+const os_1 = __importDefault(require("os"));
 const path_1 = __importDefault(require("path"));
 const process_1 = __importDefault(require("process"));
-const os_1 = __importDefault(require("os"));
-// Compute paths at the top so they're stable even if cwd changes.
-const ENV_PATH = path_1.default.join(process_1.default.cwd(), '.env');
-const CONFIG_SRC_PATH = path_1.default.join(process_1.default.cwd(), 'src', 'config', 'index.ts');
-// If ts-node-dev / ts-node / node kept a cached compiled version of this file
-// from a previous run with different .env content, then a respawn might reuse
-// the cached module.exports and skip dotenv.config() entirely — meaning your
-// newly saved PORT=5000 in .env would be ignored and old PORT=5001 used.
-//
-// We force a fresh dotenv reload on EVERY evaluation by (a) explicitly
-// reading .env's mtime to detect change, and (b) invalidating any cached
-// compiled copy of our OWN module so the whole file re-evaluates if needed.
-const ENV_MTIME_KEY = '__autoparts_env_mtime_ms__';
-try {
-    const envStat = fs_1.default.statSync(ENV_PATH);
-    const last = globalThis[ENV_MTIME_KEY];
-    if (!last || last !== envStat.mtimeMs) {
-        // .env changed (or is first load) → drop any ts-node-dev cached copy of
-        // src/config/index.{ts,js} so the module's top-level dotenv.config() runs.
-        const dropKeys = [__filename, CONFIG_SRC_PATH];
-        for (const k of Object.keys(require.cache)) {
-            if (dropKeys.includes(k) ||
-                k === CONFIG_SRC_PATH ||
-                k.endsWith('src/config/index.ts') ||
-                k.endsWith('dist/config/index.js')) {
-                delete require.cache[k];
-            }
-        }
-        globalThis[ENV_MTIME_KEY] =
-            envStat.mtimeMs;
-    }
-}
-catch {
-    /* noop if .env missing on disk */
-}
-// override: true guarantees the .env file ALWAYS wins over any stray PORT / env var
-// that might already be set in the user's shell / Windows user/system environment.
-// (Requires dotenv >= 16; this project ships dotenv ^16.)
-const dotenvResult = dotenv_1.default.config({
-    path: ENV_PATH,
-    override: true,
+const zod_1 = require("zod");
+dotenv_1.default.config({
+    path: path_1.default.join(process_1.default.cwd(), '.env'),
+    override: false,
 });
-if (dotenvResult.error) {
-    // eslint-disable-next-line no-console
-    console.warn(`[config] dotenv failed to load .env file — running on pure process.env only. ${dotenvResult.error.message}`);
-}
-if (dotenvResult.parsed && Object.prototype.hasOwnProperty.call(dotenvResult.parsed, 'PORT')) {
-    process_1.default.env.PORT = dotenvResult.parsed.PORT;
-}
-if (dotenvResult.parsed && Object.prototype.hasOwnProperty.call(dotenvResult.parsed, 'IP_ADDRESS')) {
-    process_1.default.env.IP_ADDRESS = dotenvResult.parsed.IP_ADDRESS;
-}
-function resolvePort(requested, fallback = 5001) {
-    if (requested === undefined || requested === null || requested === '') {
-        return fallback;
+const envSchema = zod_1.z
+    .object({
+    NODE_ENV: zod_1.z
+        .enum(['development', 'test', 'production'])
+        .default('development'),
+    DATABASE_URL: zod_1.z.string().min(1),
+    PORT: zod_1.z.coerce.number().int().min(1).max(65535).default(5001),
+    IP_ADDRESS: zod_1.z.string().default('0.0.0.0'),
+    BCRYPT_SALT_ROUNDS: zod_1.z.coerce.number().int().min(10).max(15).default(12),
+    JWT_SECRET: zod_1.z.string().min(1),
+    JWT_EXPIRE_IN: zod_1.z.string().min(1).default('1d'),
+    JWT_REFRESH_SECRET: zod_1.z.string().min(32).optional(),
+    JWT_REFRESH_EXPIRE_IN: zod_1.z.string().min(1).default('30d'),
+    EMAIL_FROM: zod_1.z.string().email().optional(),
+    EMAIL_FROM_NAME: zod_1.z.string().default('Jbay'),
+    AWS_REGION: zod_1.z.string().default('us-east-1'),
+    AWS_ACCESS_KEY_ID: zod_1.z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: zod_1.z.string().optional(),
+    AWS_BUCKET: zod_1.z.string().optional(),
+    CLOUDFRONT_DOMAIN: zod_1.z.string().optional(),
+    BRAND_LOGO_URL: zod_1.z.string().url().optional(),
+    PROJECT_NAME: zod_1.z.string().default('JBAY'),
+    SUPER_ADMIN_EMAIL: zod_1.z.string().email().optional(),
+    SUPER_ADMIN_PASSWORD: zod_1.z.string().min(1).optional(),
+    CORS_ORIGINS: zod_1.z.string().optional(),
+    RATE_LIMIT_WINDOW_MS: zod_1.z.coerce.number().int().positive().default(900000),
+    RATE_LIMIT_MAX: zod_1.z.coerce.number().int().positive().default(100),
+    RATE_LIMIT_MESSAGE: zod_1.z
+        .string()
+        .default('Too many requests from this IP, please try again later.'),
+})
+    .superRefine((env, ctx) => {
+    if (env.NODE_ENV !== 'production')
+        return;
+    if (env.JWT_SECRET.length < 32) {
+        ctx.addIssue({
+            code: zod_1.z.ZodIssueCode.custom,
+            path: ['JWT_SECRET'],
+            message: 'JWT_SECRET must contain at least 32 characters in production',
+        });
     }
-    const n = typeof requested === 'number' ? requested : parseInt(requested, 10);
-    if (Number.isFinite(n) && n >= 1 && n <= 65535)
-        return n;
-    // eslint-disable-next-line no-console
-    console.warn(`[config] PORT=${String(requested)} is invalid (expected integer 1-65535). Falling back to ${fallback}.`);
-    return fallback;
-}
-function resolveListenAddress(requested) {
-    const clean = (requested || '').toString().trim();
-    if (!clean)
-        return '0.0.0.0';
-    if (clean === '0.0.0.0' || clean === 'localhost' || clean === '127.0.0.1') {
-        return clean;
+    if (env.SUPER_ADMIN_PASSWORD && env.SUPER_ADMIN_PASSWORD.length < 12) {
+        ctx.addIssue({
+            code: zod_1.z.ZodIssueCode.custom,
+            path: ['SUPER_ADMIN_PASSWORD'],
+            message: 'SUPER_ADMIN_PASSWORD must contain at least 12 characters in production',
+        });
     }
-    // Collect all local IPv4 addresses on this machine
+    const required = [
+        'JWT_REFRESH_SECRET',
+        'EMAIL_FROM',
+        'AWS_BUCKET',
+        'CORS_ORIGINS',
+        'SUPER_ADMIN_EMAIL',
+        'SUPER_ADMIN_PASSWORD',
+    ];
+    for (const key of required) {
+        if (!env[key]) {
+            ctx.addIssue({
+                code: zod_1.z.ZodIssueCode.custom,
+                path: [key],
+                message: `${key} is required in production`,
+            });
+        }
+    }
+    if (env.JWT_REFRESH_SECRET === env.JWT_SECRET) {
+        ctx.addIssue({
+            code: zod_1.z.ZodIssueCode.custom,
+            path: ['JWT_REFRESH_SECRET'],
+            message: 'JWT_REFRESH_SECRET must differ from JWT_SECRET',
+        });
+    }
+});
+const parsed = envSchema.safeParse(process_1.default.env);
+if (!parsed.success) {
+    const details = parsed.error.issues
+        .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+        .join('; ');
+    throw new Error(`Invalid environment configuration: ${details}`);
+}
+const env = parsed.data;
+const resolveListenAddress = (requested) => {
+    if (['0.0.0.0', 'localhost', '127.0.0.1'].includes(requested))
+        return requested;
     const localIps = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::']);
-    Object.values(os_1.default.networkInterfaces()).forEach((nis) => {
-        nis?.forEach((n) => {
-            if (!n.internal && n.family === 'IPv4')
-                localIps.add(n.address);
+    Object.values(os_1.default.networkInterfaces()).forEach(interfaces => {
+        interfaces?.forEach(network => {
+            if (!network.internal && network.family === 'IPv4') {
+                localIps.add(network.address);
+            }
         });
     });
-    if (localIps.has(clean))
-        return clean;
-    // Requested IP is NOT assigned to any local adapter — fall back gracefully.
-    // eslint-disable-next-line no-console
-    console.warn(`[config] IP_ADDRESS=${clean} is not assigned to any local adapter (have: ${[
-        ...localIps,
-    ]
-        .filter((x) => x !== '0.0.0.0' && x !== '::')
-        .join(', ')}). Falling back to 0.0.0.0 (listen on all interfaces).`);
-    return '0.0.0.0';
-}
-// IMPORTANT: use getters for `ip_address` and `port` (the bindings that depend on
-// .env / process.env) so that ts-node-dev respawns OR cached compiled
-// config/index.js copies from earlier runs NEVER serve a stale value. The
-// trade-off is one extra os.networkInterfaces() + parseInt() call per access,
-// which is totally negligible (<1 ms) because config.port/ip_address are
-// read once at HTTP listen startup and never in a hot path.
-//
-// Other values (jwt, aws, branding, etc.) are fine as eager properties because
-// if they change you MUST restart anyway (some are security-sensitive and we
-// intentionally do NOT want them to change mid-process).
+    return localIps.has(requested) ? requested : '0.0.0.0';
+};
+const corsOrigins = env.CORS_ORIGINS
+    ? env.CORS_ORIGINS.split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean)
+    : env.NODE_ENV === 'production'
+        ? []
+        : ['*'];
 const config = {
-    get ip_address() {
-        return resolveListenAddress(process_1.default.env.IP_ADDRESS);
-    },
-    database_url: process_1.default.env.DATABASE_URL,
-    node_env: process_1.default.env.NODE_ENV,
-    get port() {
-        return resolvePort(process_1.default.env.PORT, 5001);
-    },
-    bcrypt_salt_rounds: process_1.default.env.BCRYPT_SALT_ROUNDS,
+    ip_address: resolveListenAddress(env.IP_ADDRESS),
+    database_url: env.DATABASE_URL,
+    node_env: env.NODE_ENV,
+    port: env.PORT,
+    bcrypt_salt_rounds: env.BCRYPT_SALT_ROUNDS,
+    corsOrigins,
     jwt: {
-        jwt_secret: process_1.default.env.JWT_SECRET,
-        jwt_expire_in: process_1.default.env.JWT_EXPIRE_IN,
-        refresh_secret: process_1.default.env.JWT_REFRESH_SECRET || process_1.default.env.JWT_SECRET,
-        refresh_expire_in: process_1.default.env.JWT_REFRESH_EXPIRE_IN || process_1.default.env.JWT_EXPIRE_IN,
+        jwt_secret: env.JWT_SECRET,
+        jwt_expire_in: env.JWT_EXPIRE_IN,
+        refresh_secret: env.JWT_REFRESH_SECRET || env.JWT_SECRET,
+        refresh_expire_in: env.JWT_REFRESH_EXPIRE_IN,
     },
     email: {
-        from: process_1.default.env.EMAIL_FROM,
-        fromName: process_1.default.env.EMAIL_FROM_NAME || 'Jbay',
+        from: env.EMAIL_FROM,
+        fromName: env.EMAIL_FROM_NAME,
     },
     aws: {
-        region: process_1.default.env.AWS_REGION || 'us-east-1',
-        accessKeyId: process_1.default.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process_1.default.env.AWS_SECRET_ACCESS_KEY,
-        bucket: process_1.default.env.AWS_BUCKET,
-        cloudFrontDomain: process_1.default.env.CLOUDFRONT_DOMAIN,
+        region: env.AWS_REGION,
+        accessKeyId: env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+        bucket: env.AWS_BUCKET,
+        cloudFrontDomain: env.CLOUDFRONT_DOMAIN,
     },
     branding: {
-        logoUrl: process_1.default.env.BRAND_LOGO_URL,
-        projectName: process_1.default.env.PROJECT_NAME || 'JBAY',
+        logoUrl: env.BRAND_LOGO_URL,
+        projectName: env.PROJECT_NAME,
     },
     super_admin: {
-        email: process_1.default.env.SUPER_ADMIN_EMAIL,
-        password: process_1.default.env.SUPER_ADMIN_PASSWORD,
+        email: env.SUPER_ADMIN_EMAIL,
+        password: env.SUPER_ADMIN_PASSWORD,
     },
     rateLimit: {
-        windowMs: parseInt(process_1.default.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-        max: parseInt(process_1.default.env.RATE_LIMIT_MAX || '100', 10), // 100 requests per window
-        message: process_1.default.env.RATE_LIMIT_MESSAGE || 'Too many requests from this IP, please try again later.',
+        windowMs: env.RATE_LIMIT_WINDOW_MS,
+        max: env.RATE_LIMIT_MAX,
+        message: env.RATE_LIMIT_MESSAGE,
     },
 };
 exports.default = config;

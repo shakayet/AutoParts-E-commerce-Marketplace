@@ -9,7 +9,7 @@ import config from '../config';
 import { errorLogger, logger } from '../shared/logger';
 import { ISendEmail } from '../types/email';
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -71,10 +71,11 @@ const isTransientError = (err: unknown): boolean => {
     const code = e.code || '';
     const statusCode = e.$metadata?.httpStatusCode;
     const nameOrCodeMatch = retryableCodes.some(
-      (c) => name.includes(c) || code.includes(c),
+      c => name.includes(c) || code.includes(c),
     );
     const statusMatch =
-      typeof statusCode === 'number' && retryableStatusCodes.includes(statusCode);
+      typeof statusCode === 'number' &&
+      retryableStatusCodes.includes(statusCode);
     return nameOrCodeMatch || statusMatch;
   }
   return false;

@@ -71,6 +71,8 @@ const updateProfileToDB = async (
   payload: Partial<IUser>,
 ): Promise<Partial<IUser | null>> => {
   const { id } = user;
+  delete payload.password;
+  delete payload.role;
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -132,7 +134,7 @@ const changePasswordToDB = async (
   newPassword: string,
 ): Promise<void> => {
   const { id } = user;
-  const isExistUser = await User.isExistUserById(id);
+  const isExistUser = await User.findById(id).select('+password');
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -143,7 +145,8 @@ const changePasswordToDB = async (
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Old password is incorrect');
   }
 
-  await User.findByIdAndUpdate(id, { password: newPassword });
+  isExistUser.password = newPassword;
+  await isExistUser.save();
 };
 
 const blockUnblockUserToDB = async (
@@ -178,7 +181,7 @@ const deleteAccountToDB = async (
   password: string,
 ): Promise<void> => {
   const { id } = user;
-  const isExistUser = await User.isExistUserById(id);
+  const isExistUser = await User.findById(id).select('+password');
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }

@@ -10,55 +10,52 @@ const router = express.Router();
 router.post(
   '/login',
   validateRequest(AuthValidation.createLoginZodSchema),
-  AuthController.loginUser
+  AuthController.loginUser,
 );
 
 router.post(
   '/refresh-token',
   validateRequest(AuthValidation.createRefreshTokenZodSchema),
-  AuthController.refreshToken
+  AuthController.refreshToken,
 );
 
 router.post(
   '/logout',
   validateRequest(AuthValidation.createRefreshTokenZodSchema),
-  AuthController.logout
+  AuthController.logout,
 );
 
 router.post(
   '/register',
   validateRequest(UserValidation.createUserZodSchema),
-  AuthController.registerUser
+  AuthController.registerUser,
 );
 
-router.post(
-  '/resend-otp',
-  AuthController.resendOtp
-);
+router.post('/resend-otp', AuthController.resendOtp);
 
 router.post(
   '/verify-email',
   validateRequest(AuthValidation.createVerifyEmailZodSchema),
-  AuthController.verifyEmail
+  AuthController.verifyEmail,
 );
 
 router.post(
   '/forget-password',
   validateRequest(AuthValidation.createForgetPasswordZodSchema),
-  AuthController.forgetPassword
+  AuthController.forgetPassword,
 );
 
 router.post(
   '/reset-password',
   validateRequest(AuthValidation.createResetPasswordZodSchema),
-  AuthController.resetPassword
+  AuthController.resetPassword,
 );
 
 router.post(
   '/change-password',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   validateRequest(AuthValidation.createChangePasswordZodSchema),
-  AuthController.changePassword
+  AuthController.changePassword,
 );
 
 export const AuthRoutes = router;

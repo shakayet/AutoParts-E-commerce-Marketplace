@@ -9,10 +9,9 @@ const ApiError_1 = __importDefault(require("../../errors/ApiError"));
 const handleValidationError_1 = __importDefault(require("../../errors/handleValidationError"));
 const handleZodError_1 = __importDefault(require("../../errors/handleZodError"));
 const logger_1 = require("../../shared/logger");
-const globalErrorHandler = (error, req, res, next) => {
-    config_1.default.node_env === 'development'
-        ? console.log('🚨 globalErrorHandler ~~ ', error)
-        : logger_1.errorLogger.error('🚨 globalErrorHandler ~~ ', error);
+const globalErrorHandler = (error, _req, res, _next) => {
+    void _next;
+    logger_1.errorLogger.error('Global request error', error);
     let statusCode = 500;
     let message = 'Something went wrong';
     let errorMessages = [];
@@ -53,15 +52,17 @@ const globalErrorHandler = (error, req, res, next) => {
             : [];
     }
     else if (error instanceof Error) {
-        message = error.message;
-        errorMessages = error.message
-            ? [
-                {
-                    path: '',
-                    message: error?.message,
-                },
-            ]
-            : [];
+        const exposeDetails = config_1.default.node_env !== 'production';
+        message = exposeDetails ? error.message : 'Something went wrong';
+        errorMessages =
+            exposeDetails && error.message
+                ? [
+                    {
+                        path: '',
+                        message: error?.message,
+                    },
+                ]
+                : [];
     }
     res.status(statusCode).json({
         success: false,

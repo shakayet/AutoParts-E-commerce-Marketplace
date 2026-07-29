@@ -4,6 +4,7 @@ import { Secret } from 'jsonwebtoken';
 import config from '../../config';
 import ApiError from '../../errors/ApiError';
 import { jwtHelper } from '../../helpers/jwtHelper';
+import { User } from '../modules/user/user.model';
 
 const auth =
   (...roles: string[]) =>
@@ -14,27 +15,37 @@ const auth =
         throw new ApiError(StatusCodes.UNAUTHORIZED, 'You are not authorized');
       }
 
-      if (tokenWithBearer && tokenWithBearer.startsWith('Bearer')) {
-        const token = tokenWithBearer.split(' ')[1];
-
-        //verify token
-        const verifyUser = jwtHelper.verifyToken(
-          token,
-          config.jwt.jwt_secret as Secret
-        );
-        //set user to header
-        req.user = verifyUser;
-
-        //guard user
-        if (roles.length && !roles.includes(verifyUser.role)) {
-          throw new ApiError(
-            StatusCodes.FORBIDDEN,
-            "You don't have permission to access this api"
-          );
-        }
-
-        next();
+      const [scheme, token, extra] = tokenWithBearer.trim().split(/\s+/);
+      if (scheme !== 'Bearer' || !token || extra) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, 'You are not authorized');
       }
+
+      const verifyUser = jwtHelper.verifyToken(
+        token,
+        config.jwt.jwt_secret as Secret,
+      );
+      const currentUser = await User.findById(verifyUser.id).select(
+        'role status isBlocked verified',
+      );
+      if (
+        !currentUser ||
+        !currentUser.verified ||
+        currentUser.status === 'banned' ||
+        currentUser.isBlocked
+      ) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, 'You are not authorized');
+      }
+
+      verifyUser.role = currentUser.role;
+      req.user = verifyUser;
+
+      if (roles.length && !roles.includes(currentUser.role)) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          "You don't have permission to access this api",
+        );
+      }
+      next();
     } catch (error) {
       next(error);
     }

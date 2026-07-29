@@ -10,7 +10,7 @@ type FetchOptions = { page?: number; limit?: number; isRead?: boolean };
 
 const getNotificationsForUser = async (
   userId: string,
-  opts: FetchOptions = {}
+  opts: FetchOptions = {},
 ) => {
   const page = Math.max(1, opts.page || 1);
   const limit = Math.min(100, opts.limit || 20);
@@ -45,7 +45,7 @@ const markAsRead = async (id: string, userId: string) => {
 const markAllAsRead = async (userId: string) => {
   const res = await Notification.updateMany(
     { user: userId, isRead: false },
-    { $set: { isRead: true } }
+    { $set: { isRead: true } },
   );
   try {
     const io = (global as any).io;

@@ -53,6 +53,8 @@ const getUserProfileFromDB = async (user) => {
 };
 const updateProfileToDB = async (user, payload) => {
     const { id } = user;
+    delete payload.password;
+    delete payload.role;
     const isExistUser = await user_model_1.User.isExistUserById(id);
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -97,7 +99,7 @@ const getUserByIdFromDB = async (id) => {
 };
 const changePasswordToDB = async (user, oldPassword, newPassword) => {
     const { id } = user;
-    const isExistUser = await user_model_1.User.isExistUserById(id);
+    const isExistUser = await user_model_1.User.findById(id).select('+password');
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
@@ -106,7 +108,8 @@ const changePasswordToDB = async (user, oldPassword, newPassword) => {
     if (!isMatch) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'Old password is incorrect');
     }
-    await user_model_1.User.findByIdAndUpdate(id, { password: newPassword });
+    isExistUser.password = newPassword;
+    await isExistUser.save();
 };
 const blockUnblockUserToDB = async (userId, block) => {
     const user = await user_model_1.User.findById(userId);
@@ -127,7 +130,7 @@ const deleteUserFromDB = async (userId) => {
 };
 const deleteAccountToDB = async (user, password) => {
     const { id } = user;
-    const isExistUser = await user_model_1.User.isExistUserById(id);
+    const isExistUser = await user_model_1.User.findById(id).select('+password');
     if (!isExistUser) {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }

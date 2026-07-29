@@ -5,7 +5,7 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 
 const addToWishlist = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { productId } = req.body;
 
   const result = await WishlistService.addToWishlist(userId, productId);

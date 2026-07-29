@@ -27,6 +27,7 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: true,
       minlength: 8,
+      select: false,
     },
     image: {
       type: String,
@@ -79,6 +80,14 @@ const userSchema = new Schema<IUser, UserModal>(
           default: null,
         },
         expireAt: {
+          type: Date,
+          default: null,
+        },
+        resendCount: {
+          type: Number,
+          default: 0,
+        },
+        lastResendAt: {
           type: Date,
           default: null,
         },

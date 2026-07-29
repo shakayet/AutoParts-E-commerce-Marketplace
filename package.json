@@ -2,6 +2,9 @@
   "name": "educoin-backend",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": ">=20 <25"
+  },
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -9,9 +12,10 @@
     "start": "node dist/server.js",
     "lint:check": "eslint --ignore-path .eslintignore --ext .js,.ts .",
     "lint:fix": "eslint . --fix",
-    "prettier:check": "prettier --ignore-path .gitignore --check \"**/*.+(js|ts|json)\"",
+    "prettier:check": "prettier --check \"src/**/*.{js,ts,json}\" \"__tests__/**/*.{js,ts,json}\" \"*.{js,cjs,json}\"",
     "prettier:fix": "prettier --write .",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
+    "check": "npm run build && npm run lint:check && npm run prettier:check && npm test -- --runInBand",
     "test:watch": "jest --watch"
   },
   "keywords": [],
@@ -26,12 +30,15 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^29.6.0",
+    "prettier": "^3.6.2",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.1.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.3"
@@ -57,7 +64,7 @@
     "mongoose": "^8.4.4",
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.3",
     "socket.io": "^4.7.5",
     "tesseract.js": "^6.0.1",
     "uuid": "^13.0.0",

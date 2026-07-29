@@ -12,6 +12,12 @@ const payload = {
 };
 
 export const seedSuperAdmin = async () => {
+  if (!config.super_admin.email || !config.super_admin.password) {
+    logger.warn(
+      'Super admin seeding skipped because credentials are not configured',
+    );
+    return;
+  }
   const isExistSuperAdmin = await User.findOne({
     email: config.super_admin.email,
     role: USER_ROLES.SUPER_ADMIN,

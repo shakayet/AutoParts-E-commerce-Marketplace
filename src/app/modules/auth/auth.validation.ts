@@ -10,7 +10,7 @@ const createVerifyEmailZodSchema = z.object({
 const createLoginZodSchema = z.object({
   body: z.object({
     email: z.string({ required_error: 'Email is required' }),
-    password: z.string({ required_error: 'Password is required' }),
+    password: z.string({ required_error: 'Password is required' }).min(8),
   }),
 });
 
@@ -22,7 +22,7 @@ const createForgetPasswordZodSchema = z.object({
 
 const createResetPasswordZodSchema = z.object({
   body: z.object({
-    newPassword: z.string({ required_error: 'Password is required' }),
+    newPassword: z.string({ required_error: 'Password is required' }).min(8),
     confirmPassword: z.string({
       required_error: 'Confirm Password is required',
     }),
@@ -34,7 +34,9 @@ const createChangePasswordZodSchema = z.object({
     currentPassword: z.string({
       required_error: 'Current Password is required',
     }),
-    newPassword: z.string({ required_error: 'New Password is required' }),
+    newPassword: z
+      .string({ required_error: 'New Password is required' })
+      .min(8),
     confirmPassword: z.string({
       required_error: 'Confirm Password is required',
     }),

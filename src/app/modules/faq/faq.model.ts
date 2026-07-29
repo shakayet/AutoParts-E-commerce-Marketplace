@@ -9,7 +9,7 @@ const faqSchema = new Schema<IFAQ>(
     image: { type: String, default: true },
     isActive: { type: Boolean, default: true, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const FAQ = model<IFAQ>('FAQ', faqSchema as any);

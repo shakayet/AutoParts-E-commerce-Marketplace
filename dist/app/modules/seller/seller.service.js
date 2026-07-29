@@ -13,7 +13,9 @@ const getSellerLocationLinkFromDB = async (sellerId) => {
     if (!user)
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Seller not found');
     const coords = user.coordinates;
-    if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+    if (!coords ||
+        typeof coords.lat !== 'number' ||
+        typeof coords.lng !== 'number') {
         throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Seller coordinates not available');
     }
     const lat = coords.lat;

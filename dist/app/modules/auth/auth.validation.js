@@ -11,7 +11,7 @@ const createVerifyEmailZodSchema = zod_1.z.object({
 const createLoginZodSchema = zod_1.z.object({
     body: zod_1.z.object({
         email: zod_1.z.string({ required_error: 'Email is required' }),
-        password: zod_1.z.string({ required_error: 'Password is required' }),
+        password: zod_1.z.string({ required_error: 'Password is required' }).min(8),
     }),
 });
 const createForgetPasswordZodSchema = zod_1.z.object({
@@ -21,7 +21,7 @@ const createForgetPasswordZodSchema = zod_1.z.object({
 });
 const createResetPasswordZodSchema = zod_1.z.object({
     body: zod_1.z.object({
-        newPassword: zod_1.z.string({ required_error: 'Password is required' }),
+        newPassword: zod_1.z.string({ required_error: 'Password is required' }).min(8),
         confirmPassword: zod_1.z.string({
             required_error: 'Confirm Password is required',
         }),
@@ -32,7 +32,9 @@ const createChangePasswordZodSchema = zod_1.z.object({
         currentPassword: zod_1.z.string({
             required_error: 'Current Password is required',
         }),
-        newPassword: zod_1.z.string({ required_error: 'New Password is required' }),
+        newPassword: zod_1.z
+            .string({ required_error: 'New Password is required' })
+            .min(8),
         confirmPassword: zod_1.z.string({
             required_error: 'Confirm Password is required',
         }),

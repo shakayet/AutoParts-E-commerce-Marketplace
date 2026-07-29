@@ -31,7 +31,9 @@ const createCategoryRequest = catchAsync(
 );
 
 const getCategoryRequests = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryRequestService.getCategoryRequestsFromDB(req.query);
+  const result = await CategoryRequestService.getCategoryRequestsFromDB(
+    req.query,
+  );
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -59,15 +61,17 @@ const reviewCategoryRequest = catchAsync(
   },
 );
 
-const deleteCategoryRequest = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  await CategoryRequestService.deleteCategoryRequestFromDB(id);
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Category request deleted successfully',
-  });
-});
+const deleteCategoryRequest = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    await CategoryRequestService.deleteCategoryRequestFromDB(id);
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Category request deleted successfully',
+    });
+  },
+);
 
 export const CategoryRequestController = {
   createCategoryRequest,

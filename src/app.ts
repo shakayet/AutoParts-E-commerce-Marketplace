@@ -6,6 +6,8 @@ import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import rateLimiter from './app/middlewares/rateLimiter';
 import router from './routes';
 import { Morgan } from './shared/morgen';
+import config from './config';
+import mongoose from 'mongoose';
 const app = express();
 
 // Trust the first reverse proxy (Nginx)
@@ -22,7 +24,21 @@ app.use(helmet());
 app.use(rateLimiter);
 
 //body parser
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (
+        !origin ||
+        config.corsOrigins.includes('*') ||
+        config.corsOrigins.includes(origin)
+      ) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Origin is not allowed by CORS'));
+    },
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -39,6 +55,14 @@ app.get('/', (req: Request, res: Response) => {
     <p style="text-align:center; color:#173616; font-family:Verdana;">${date}</p>
     `,
   );
+});
+
+app.get('/health', (_req: Request, res: Response) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? StatusCodes.OK : StatusCodes.SERVICE_UNAVAILABLE).json({
+    success: ready,
+    message: ready ? 'Service is healthy' : 'Service is not ready',
+  });
 });
 
 //global error handle

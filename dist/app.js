@@ -11,6 +11,8 @@ const globalErrorHandler_1 = __importDefault(require("./app/middlewares/globalEr
 const rateLimiter_1 = __importDefault(require("./app/middlewares/rateLimiter"));
 const routes_1 = __importDefault(require("./routes"));
 const morgen_1 = require("./shared/morgen");
+const config_1 = __importDefault(require("./config"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const app = (0, express_1.default)();
 // Trust the first reverse proxy (Nginx)
 app.set('trust proxy', 1);
@@ -22,7 +24,17 @@ app.use((0, helmet_1.default)());
 // Apply rate limiter to all requests
 app.use(rateLimiter_1.default);
 //body parser
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin(origin, callback) {
+        if (!origin ||
+            config_1.default.corsOrigins.includes('*') ||
+            config_1.default.corsOrigins.includes(origin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error('Origin is not allowed by CORS'));
+    },
+}));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // file retrieval is handled by CloudFront; we no longer serve from local uploads directory
@@ -34,6 +46,13 @@ app.get('/', (req, res) => {
     res.send(`<h1 style="text-align:center; color:#173616; font-family:Verdana;">Beep-beep! The server is alive and kicking.</h1>
     <p style="text-align:center; color:#173616; font-family:Verdana;">${date}</p>
     `);
+});
+app.get('/health', (_req, res) => {
+    const ready = mongoose_1.default.connection.readyState === 1;
+    res.status(ready ? http_status_codes_1.StatusCodes.OK : http_status_codes_1.StatusCodes.SERVICE_UNAVAILABLE).json({
+        success: ready,
+        message: ready ? 'Service is healthy' : 'Service is not ready',
+    });
 });
 //global error handle
 app.use(globalErrorHandler_1.default);

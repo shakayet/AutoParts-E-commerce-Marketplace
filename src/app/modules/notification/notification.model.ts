@@ -9,10 +9,10 @@ const notificationSchema = new Schema<INotification>(
     data: { type: Schema.Types.Mixed },
     isRead: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Notification = model<INotification>(
   'Notification',
-  notificationSchema as any
+  notificationSchema as any,
 );

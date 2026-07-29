@@ -15,10 +15,13 @@ const wishlistSchema = new Schema<IWishlist>(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Prevent duplicate wishlist items for same user-product pair
 wishlistSchema.index({ userId: 1, productId: 1 }, { unique: true });
 
-export const Wishlist = model<IWishlist, WishlistModel>('Wishlist', wishlistSchema);
+export const Wishlist = model<IWishlist, WishlistModel>(
+  'Wishlist',
+  wishlistSchema,
+);

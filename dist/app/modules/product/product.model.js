@@ -10,7 +10,10 @@ const productSchema = new mongoose_1.Schema({
     description: { type: String },
     carModels: [{ type: String }],
     chassisNumber: { type: String, index: true },
-    condition: { type: String, enum: ['new', 'used', 'refurbished', 'newly imported'] },
+    condition: {
+        type: String,
+        enum: ['new', 'used', 'refurbished', 'newly imported'],
+    },
     partsNumber: { type: String },
     warranty: { type: String },
     price: { type: Number, required: true },

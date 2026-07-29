@@ -13,12 +13,12 @@ const reviewSchema = new Schema<IReview, ReviewModel>(
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 reviewSchema.index({ productId: 1, userId: 1 }, { unique: true });
 
 export const Review = model<IReview, ReviewModel>(
   'Review',
-  reviewSchema as any
+  reviewSchema as any,
 );

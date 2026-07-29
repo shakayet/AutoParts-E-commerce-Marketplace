@@ -31,12 +31,14 @@ const isTransientDbNetworkError = (err) => {
     const msg = err instanceof Error
         ? `${err.name} ${err.message} ${err.code ?? ''}`
         : String(err ?? '');
-    return TRANSIENT_ERROR_PATTERNS.some((p) => msg.toLowerCase().includes(p.toLowerCase()));
+    return TRANSIENT_ERROR_PATTERNS.some(p => msg.toLowerCase().includes(p.toLowerCase()));
 };
 //uncaught exception
-process_1.default.on('uncaughtException', (error) => {
+process_1.default.on('uncaughtException', error => {
     if (isTransientDbNetworkError(error)) {
-        logger_1.errorLogger.error(`Transient network/DNS exception (kept running): ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`);
+        logger_1.errorLogger.error(`Transient network/DNS exception (kept running): ${error instanceof Error
+            ? `${error.name}: ${error.message}`
+            : String(error)}`);
         return;
     }
     const code = error instanceof Error ? error.code : undefined;
@@ -50,9 +52,11 @@ process_1.default.on('uncaughtException', (error) => {
     process_1.default.exit(1);
 });
 // handle unhandleRejection (registered BEFORE main() so bootstrap rejections are also caught)
-process_1.default.on('unhandledRejection', (error) => {
+process_1.default.on('unhandledRejection', error => {
     if (isTransientDbNetworkError(error)) {
-        logger_1.errorLogger.error(`Transient network/DNS rejection (kept running): ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`);
+        logger_1.errorLogger.error(`Transient network/DNS rejection (kept running): ${error instanceof Error
+            ? `${error.name}: ${error.message}`
+            : String(error)}`);
         return;
     }
     const code = error instanceof Error ? error.code : undefined;
@@ -72,6 +76,8 @@ process_1.default.on('unhandledRejection', (error) => {
     }
 });
 let server;
+let socketServer;
+let shuttingDown = false;
 const MAX_CONNECT_ATTEMPTS = 5;
 const CONNECT_BASE_DELAY_MS = 2000;
 const isSRVUri = (uri) => uri.trimStart().startsWith('mongodb+srv://');
@@ -119,10 +125,8 @@ async function connectWithRetry(connectionUri) {
             lastErr = error;
             if (attempt < MAX_CONNECT_ATTEMPTS) {
                 const delay = CONNECT_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-                logger_1.logger.warn
-                    ? logger_1.logger.warn(`MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${error instanceof Error ? error.message : String(error)}`)
-                    : logger_1.errorLogger.error(`MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${error instanceof Error ? error.message : String(error)}`);
-                await new Promise((r) => setTimeout(r, delay));
+                logger_1.logger.warn(`MongoDB connect attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed, retrying in ${delay}ms: ${error instanceof Error ? error.message : String(error)}`);
+                await new Promise(r => setTimeout(r, delay));
             }
         }
     }
@@ -136,7 +140,7 @@ async function main() {
         logger_1.logger.info(colors_1.default.green('🚀 Database connected successfully'));
         // Mongoose emits errors on the connection after connect (e.g. DNS SRV polling
         // failures). Log them but do NOT kill the process — the driver will retry.
-        mongoose_1.default.connection.on('error', (err) => {
+        mongoose_1.default.connection.on('error', err => {
             if (isTransientDbNetworkError(err)) {
                 logger_1.errorLogger.error(`Transient DB connection issue (driver will retry): ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`);
             }
@@ -145,6 +149,7 @@ async function main() {
             }
         });
         mongoose_1.default.connection.on('disconnected', () => {
+            // eslint-disable-next-line no-unused-expressions
             logger_1.errorLogger.warn
                 ? logger_1.errorLogger.warn('Mongoose disconnected — driver will reconnect')
                 : logger_1.errorLogger.error('Mongoose disconnected — driver will reconnect');
@@ -159,7 +164,7 @@ async function main() {
         });
         // Catch bind/listen errors BEFORE they bubble to uncaughtException and
         // print a clear, actionable message (e.g. EADDRINUSE tells you who to kill).
-        server.once('error', (err) => {
+        server.once('error', err => {
             const code = err.code;
             const addr = `${bindAddress}:${port}`;
             if (code === 'EADDRINUSE') {
@@ -179,15 +184,15 @@ async function main() {
             process_1.default.exit(1);
         });
         //socket
-        const io = new socket_io_1.Server(server, {
+        socketServer = new socket_io_1.Server(server, {
             pingTimeout: 60000,
             cors: {
-                origin: '*',
+                origin: config_1.default.corsOrigins,
             },
         });
-        socketHelper_1.socketHelper.socket(io);
+        socketHelper_1.socketHelper.socket(socketServer);
         //@ts-expect-error
-        global.io = io;
+        global.io = socketServer;
     }
     catch (error) {
         logger_1.errorLogger.error(colors_1.default.red('🤢 Failed to connect / bootstrap Database'), error instanceof Error ? error : undefined);
@@ -203,11 +208,28 @@ async function main() {
     }
 }
 main();
-//SIGTERM
-process_1.default.on('SIGTERM', () => {
-    logger_1.logger.info('SIGTERM IS RECEIVE');
-    if (server) {
-        server.close();
-    }
-});
+const shutdown = async (signal) => {
+    if (shuttingDown)
+        return;
+    shuttingDown = true;
+    logger_1.logger.info(`${signal} received; shutting down`);
+    const forceExit = setTimeout(() => {
+        logger_1.errorLogger.error('Graceful shutdown timed out');
+        process_1.default.exit(1);
+    }, 10000);
+    forceExit.unref();
+    socketServer?.close();
+    await new Promise(resolve => {
+        if (!server) {
+            resolve();
+            return;
+        }
+        server.close(() => resolve());
+    });
+    await mongoose_1.default.disconnect();
+    clearTimeout(forceExit);
+    process_1.default.exit(0);
+};
+process_1.default.on('SIGTERM', () => void shutdown('SIGTERM'));
+process_1.default.on('SIGINT', () => void shutdown('SIGINT'));
 //# sourceMappingURL=server.js.map

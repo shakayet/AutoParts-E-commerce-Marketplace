@@ -6,7 +6,10 @@ import { SellerValidation } from './seller.validation';
 const router = express.Router();
 
 router
-	.route('/:id/location')
-	.get(validateRequest(SellerValidation.getSellerLocationZodSchema), SellerController.getSellerLocationLink);
+  .route('/:id/location')
+  .get(
+    validateRequest(SellerValidation.getSellerLocationZodSchema),
+    SellerController.getSellerLocationLink,
+  );
 
 export const SellerRoutes = router;
