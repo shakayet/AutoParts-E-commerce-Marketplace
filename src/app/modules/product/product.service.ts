@@ -282,12 +282,17 @@ const searchProductsFromDB = async (
 
   // Fallback to QueryBuilder for non-proximity search
   const baseQuery: FilterQuery<IProduct> = { isBlocked: false };
-  const filters: Record<string, any> = { ...restFilters };
+  const filters: Record<string, unknown> = { ...restFilters };
 
-  if (category) filters.category = { $regex: category, $options: 'i' };
-  if (title) filters.title = { $regex: title, $options: 'i' };
-  if (brand) filters.brand = { $regex: brand, $options: 'i' };
-  if (carModels) filters.carModels = { $regex: carModels, $options: 'i' };
+  // These operators are built by the server from validated string values.
+  // Keep them on the base query so QueryBuilder's user-query sanitizer does
+  // not remove $regex/$options and leave an invalid `{ field: {} }` filter.
+  if (category)
+    baseQuery.category = { $regex: category as string, $options: 'i' };
+  if (title) baseQuery.title = { $regex: title as string, $options: 'i' };
+  if (brand) baseQuery.brand = { $regex: brand as string, $options: 'i' };
+  if (carModels)
+    baseQuery.carModels = { $regex: carModels as string, $options: 'i' };
 
   const queryBuilder = new QueryBuilder(
     Product.find(baseQuery).populate(

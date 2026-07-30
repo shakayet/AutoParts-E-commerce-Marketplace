@@ -216,14 +216,17 @@ const searchProductsFromDB = async (query) => {
     // Fallback to QueryBuilder for non-proximity search
     const baseQuery = { isBlocked: false };
     const filters = { ...restFilters };
+    // These operators are built by the server from validated string values.
+    // Keep them on the base query so QueryBuilder's user-query sanitizer does
+    // not remove $regex/$options and leave an invalid `{ field: {} }` filter.
     if (category)
-        filters.category = { $regex: category, $options: 'i' };
+        baseQuery.category = { $regex: category, $options: 'i' };
     if (title)
-        filters.title = { $regex: title, $options: 'i' };
+        baseQuery.title = { $regex: title, $options: 'i' };
     if (brand)
-        filters.brand = { $regex: brand, $options: 'i' };
+        baseQuery.brand = { $regex: brand, $options: 'i' };
     if (carModels)
-        filters.carModels = { $regex: carModels, $options: 'i' };
+        baseQuery.carModels = { $regex: carModels, $options: 'i' };
     const queryBuilder = new QueryBuilder_1.default(product_model_1.Product.find(baseQuery).populate('sellerId', 'name whatsappNumber coordinates'), {
         ...filters,
         searchTerm,
